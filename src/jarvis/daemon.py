@@ -456,6 +456,17 @@ def submit_text_query(
     _chat_cancel_event = cancel_event
 
     def _worker() -> None:
+        state_token = None
+        state_mgr = None
+        try:
+            from .activity import get_jarvis_state, JarvisState
+            state_mgr = get_jarvis_state()
+            state_token = state_mgr.acquire_state(
+                JarvisState.THINKING, restore_state=JarvisState.IDLE,
+                protected_states={JarvisState.DICTATING, JarvisState.DICTATION_PROCESSING},
+            )
+        except Exception:
+            pass
         try:
             # Snapshot the redacted query for the start event. ``run_reply_engine``
             # redacts internally too; we mirror that here so the IPC stream and
@@ -486,6 +497,24 @@ def submit_text_query(
                 )
                 print(f"\n🤖 Jarvis\n{logged_reply}\n", flush=True)
             _notify_chat("complete", reply, callbacks=callbacks, use_ipc=use_ipc)
+
+            if state_mgr is not None and state_token is not None:
+                state_mgr.release_state(state_token)
+                state_token = None
+            if reply and not cancel_event.is_set() and state_mgr is not None:
+                speak_token = state_mgr.acquire_state(
+                    JarvisState.SPEAKING, restore_state=JarvisState.IDLE,
+                    protected_states={JarvisState.DICTATING, JarvisState.DICTATION_PROCESSING},
+                )
+                if speak_token is not None:
+                    def _finish_speaking():
+                        import time as _t
+                        _t.sleep(min(max(len(reply) * 0.035, 1.8), 4.0))
+                        try:
+                            state_mgr.release_state(speak_token)
+                        except Exception:
+                            pass
+                    threading.Thread(target=_finish_speaking, daemon=True).start()
         except Exception as exc:
             debug_log(f"chat query worker error: {exc}", "chat")
             try:
@@ -493,11 +522,15 @@ def submit_text_query(
             except Exception:
                 pass
         finally:
+            if state_mgr is not None and state_token is not None:
+                try:
+                    state_mgr.release_state(state_token)
+                except Exception:
+                    pass
             global _chat_cancel_event
             if _chat_cancel_event is cancel_event:
                 _chat_cancel_event = None
             _chat_query_lock.release()
-
     try:
         threading.Thread(target=_worker, name="jarvis-chat-query", daemon=True).start()
     except Exception:

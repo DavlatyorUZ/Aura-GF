@@ -106,7 +106,12 @@ class FaceWidget(QWidget):
             self.state_observed.emit(state.value)
             debug_log(f'Companion activity: {state.value}', 'face')
         awake = state != JarvisState.ASLEEP
-        self._mouth_open = (math.sin(self._elapsed * 14) + 1) / 2 if state == JarvisState.SPEAKING else 0.0
+        if state == JarvisState.SPEAKING:
+            syllable = (math.sin(self._elapsed * 16.0) * 0.7 + math.sin(self._elapsed * 7.5) * 0.3 + 1.0) / 2.0
+            phrase = max(0.0, math.sin(self._elapsed * 3.5))
+            self._mouth_open = max(0.0, min(1.0, syllable * (0.4 + 0.6 * phrase)))
+        else:
+            self._mouth_open = 0.0
         self._blink_factor = 0.0
         if awake:
             if self._blink_started_at is None and now >= self._next_blink_at:
@@ -129,12 +134,20 @@ class FaceWidget(QWidget):
             else:
                 self._wave_started_at = None
         thinking = state in (JarvisState.THINKING, JarvisState.DICTATION_PROCESSING)
+        effective_expression = self._expression.value
+        if self._expression == Expression.NEUTRAL:
+            if thinking:
+                effective_expression = Expression.THINKING.value
+            elif state == JarvisState.SPEAKING:
+                effective_expression = Expression.HAPPY.value
+            elif state in (JarvisState.LISTENING, JarvisState.DICTATING):
+                effective_expression = Expression.CURIOUS.value
         self._pose = CompanionPose(
             breath=round((1 + math.sin(self._elapsed * 1.8)) / 2) if awake else 0,
             blink=self._blink_factor, mouth=self._mouth_open, wave=wave,
             hair=round(math.sin(self._elapsed * 1.4)) if awake else 0,
-            gaze=round(math.sin(self._elapsed * 0.6)) if thinking else 0,
-            expression=self._expression.value,
+            gaze=round(math.sin(self._elapsed * 1.2)) if thinking else 0,
+            expression=effective_expression,
             attentive=state in (JarvisState.LISTENING, JarvisState.DICTATING),
             thinking=thinking,
         )

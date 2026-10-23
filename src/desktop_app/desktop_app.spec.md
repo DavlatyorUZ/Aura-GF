@@ -190,9 +190,12 @@ daemon lets its activity publications take over. Stopping the daemon, a crash
 or the setup wizard resets activity to ASLEEP and the capsule to Standby.
 
 Awake animation includes gentle breathing, brief blinks 4.5 to 7.5 seconds
-apart and small independent hair movement. Listening uses attentive eyes;
-thinking uses shifting gaze and processing dots; speaking animates the mouth
-and status bars without measuring audio. Dictation has a recording indicator;
+apart and small independent hair movement. Listening uses attentive, curious eyes;
+thinking uses shifting gaze, thoughtful brow, pursed mouth and floating glowing thought
+particles beside the hood; speaking articulates syllabic mouth movement and cheerful
+expressions. Resting poses maintain a delicate closed smile. All accepted expression
+types (happy, surprised, thinking, curious, excited, concerned, sad, neutral) produce
+distinct facial geometry, blush and brow cues. Dictation has a recording indicator;
 transcription combines that indicator's colour with a processing spinner.
 A user-triggered greeting articulates the sleeve and hand for 2.4 seconds,
 without moving the window or changing the assistant's activity state.

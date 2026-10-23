@@ -20,6 +20,15 @@ and natural language processing capabilities.
 import os as _os
 import sys as _sys
 
+if _sys.platform == 'win32':
+    try:
+        if hasattr(_sys.stdout, 'reconfigure'):
+            _sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        if hasattr(_sys.stderr, 'reconfigure'):
+            _sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 if _sys.version_info < (3, 11):
     raise SystemExit(
         "⚠️ Python 3.11 or later is required to run Jarvis. "

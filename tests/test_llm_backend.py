@@ -598,6 +598,20 @@ class TestCheckVersion:
 class TestOllamaBackendWarmUp:
     @patch("jarvis.llm.http.post")
     @patch("jarvis.llm.http.get")
+    def test_warmup_prepares_the_context_used_by_conversation(self, mock_get, mock_post):
+        from jarvis.llm import OllamaBackend
+
+        mock_get.return_value = _make_response(json_data={"version": "0.5.1"})
+        mock_post.return_value = _make_response(json_data={"message": {"content": "hello"}})
+        backend = OllamaBackend("http://localhost:11434")
+        assert backend.warm_up("local-model")
+        warm_context = mock_post.call_args.kwargs["json"]["options"].get("num_ctx")
+        backend.chat("local-model", [{"role": "user", "content": "hello"}])
+        conversation_context = mock_post.call_args.kwargs["json"]["options"]["num_ctx"]
+        assert warm_context == conversation_context
+
+    @patch("jarvis.llm.http.post")
+    @patch("jarvis.llm.http.get")
     def test_warmup_succeeds_when_server_is_ollama(self, mock_get, mock_post):
         from jarvis.llm import OllamaBackend
 

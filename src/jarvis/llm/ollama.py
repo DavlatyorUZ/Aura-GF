@@ -412,7 +412,7 @@ class OllamaBackend(LLMBackend):
                     ],
                     "stream": False,
                     "keep_alive": keep_alive,
-                    "options": {"num_predict": 1, "temperature": 0.0},
+                    "options": {"num_ctx": 8192, "num_predict": 1, "temperature": 0.0},
                 },
                 timeout=remaining,
             ) as resp:

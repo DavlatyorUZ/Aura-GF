@@ -1,6 +1,5 @@
 @echo off
 REM Run script for the Jarvis Desktop App on Windows
-REM Uses the project's mamba environment
 REM Usage: run_desktop_app.bat [--voice-debug]
 
 REM Parse arguments
@@ -22,42 +21,34 @@ if "%VOICE_DEBUG%"=="1" (
 )
 echo.
 
-REM Navigate to project root (use for-loop to resolve .. reliably across shells)
+REM Navigate to project root
 for %%I in ("%~dp0..") do set "PROJECT_ROOT=%%~fI"
 cd /d "%PROJECT_ROOT%"
 set "PYTHONPATH=%PROJECT_ROOT%\src;%PYTHONPATH%"
 
-REM Resolve mamba env: prefer this checkout's own, fall back to the main
-REM repo's when running from a git worktree (worktrees share one env).
-set "MAMBA_ENV=%PROJECT_ROOT%\.mamba_env"
-if not exist "%MAMBA_ENV%\python.exe" call :resolve_mamba_from_worktree
+REM Resolve Python environment (venv, .venv, or .mamba_env)
+set "PYTHON_EXE="
+if exist "%PROJECT_ROOT%\venv\Scripts\python.exe" set "PYTHON_EXE=%PROJECT_ROOT%\venv\Scripts\python.exe"
+if not defined PYTHON_EXE if exist "%PROJECT_ROOT%\.venv\Scripts\python.exe" set "PYTHON_EXE=%PROJECT_ROOT%\.venv\Scripts\python.exe"
+if not defined PYTHON_EXE if exist "%PROJECT_ROOT%\.mamba_env\python.exe" set "PYTHON_EXE=%PROJECT_ROOT%\.mamba_env\python.exe"
+if not defined PYTHON_EXE call :resolve_mamba_from_worktree
 
-REM Check if mamba environment exists
-if not exist "%MAMBA_ENV%\python.exe" (
-    echo ERROR: Mamba environment not found.
-    echo    Looked in: %PROJECT_ROOT%\.mamba_env
-    echo    And the main repo's .mamba_env ^(if this is a git worktree^).
-    echo Please run the setup script first.
+REM Check if environment exists
+if not defined PYTHON_EXE (
+    echo ERROR: Python environment not found.
+    echo    Looked in: %PROJECT_ROOT%\venv, %PROJECT_ROOT%\.venv, %PROJECT_ROOT%\.mamba_env
     pause
     exit /b 1
 )
 
-REM Check Python version in mamba env
+REM Check Python version
 echo Checking Python version...
-"%MAMBA_ENV%\python.exe" --version
-echo.
-
-REM Install/update dependencies from requirements.txt
-echo Installing dependencies...
-"%MAMBA_ENV%\python.exe" -m pip install -q -r requirements.txt
-if errorlevel 1 (
-    echo WARNING: Some dependencies may have failed to install
-)
+"%PYTHON_EXE%" --version
 echo.
 
 REM Generate icons
 echo Generating icons...
-"%MAMBA_ENV%\python.exe" src\desktop_app\desktop_assets\generate_icons.py
+"%PYTHON_EXE%" src\desktop_app\desktop_assets\generate_icons.py
 echo.
 
 REM Run the desktop app
@@ -72,13 +63,13 @@ if "%VOICE_DEBUG%"=="1" (
     set "JARVIS_VOICE_DEBUG=1"
 )
 
-"%MAMBA_ENV%\python.exe" -m desktop_app
+"%PYTHON_EXE%" -m desktop_app
 goto :eof
 
 :resolve_mamba_from_worktree
 for /f "usebackq delims=" %%G in (`git -C "%PROJECT_ROOT%" rev-parse --git-common-dir 2^>nul`) do set "GIT_COMMON_DIR=%%G"
 if not defined GIT_COMMON_DIR goto :eof
 for %%I in ("%GIT_COMMON_DIR%\..") do set "MAIN_REPO=%%~fI"
-if exist "%MAIN_REPO%\.mamba_env\python.exe" set "MAMBA_ENV=%MAIN_REPO%\.mamba_env"
+if exist "%MAIN_REPO%\venv\Scripts\python.exe" set "PYTHON_EXE=%MAIN_REPO%\venv\Scripts\python.exe"
+if not defined PYTHON_EXE if exist "%MAIN_REPO%\.mamba_env\python.exe" set "PYTHON_EXE=%MAIN_REPO%\.mamba_env\python.exe"
 goto :eof
-

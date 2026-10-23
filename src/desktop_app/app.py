@@ -2619,6 +2619,10 @@ class JarvisSystemTray:
             else:
                 # When not bundled, use subprocess as before
                 python_exe = sys.executable
+                if sys.platform == 'win32' and python_exe.lower().endswith('pythonw.exe'):
+                    cand = Path(python_exe).with_name('python.exe')
+                    if cand.exists():
+                        python_exe = str(cand)
 
                 # Set up environment with PYTHONPATH for source runs
                 env = os.environ.copy()
@@ -2633,6 +2637,9 @@ class JarvisSystemTray:
                 # treat a non-TTY stdin as "no monitor" on non-Windows, and a
                 # stray /dev/null wouldn't kill it.
                 env["JARVIS_STDIN_IPC"] = "1"
+                env["PYTHONUTF8"] = "1"
+                env["PYTHONIOENCODING"] = "utf-8"
+                env["PYTHONUNBUFFERED"] = "1"
 
                 # Use creationflags to prevent console window popup on Windows
                 # CREATE_NEW_PROCESS_GROUP is needed for CTRL_BREAK_EVENT to work
@@ -2811,6 +2818,18 @@ class JarvisSystemTray:
             debug_log(f"log reader error: {e}", "desktop")
             self.log_signals.new_log.emit(f"⚠️ Log reader error: {e}\n")
 
+    @staticmethod
+    def _detect_reply_expression(text: str):
+        from desktop_app.face_widget import Expression
+        lowered = text.lower()
+        if any(w in lowered for w in ('kechirasiz', 'afsus', 'uzr', 'xato', 'muammo', 'topilmadi', 'sorry', 'unfortunately', 'error', 'apologize')):
+            return Expression.CONCERNED
+        if '?' in text or any(w in lowered for w in ('qanday', 'nima', 'qayerda', 'qachon', 'kim', 'how', 'what', 'why', 'where')):
+            return Expression.CURIOUS
+        if any(w in lowered for w in ('qoyil', 'ajoyib', "zo'r", 'tabrik', 'awesome', 'wonderful', 'excited')):
+            return Expression.EXCITED
+        return Expression.HAPPY
+
     def _on_chat_ipc_line(self, line: str) -> None:
         """Handle a ``__CHAT__:`` event line on the Qt main thread.
 
@@ -2825,6 +2844,21 @@ class JarvisSystemTray:
                 cancel_fn=getattr(self, "_chat_cancel_fn", None),
             )
         self.chat_window.process_ipc_line(line)
+        if hasattr(self, 'face_window') and self.face_window is not None:
+            from jarvis.daemon import CHAT_IPC_PREFIX
+            import json as _json
+            from desktop_app.face_widget import Expression
+            try:
+                if line.startswith(CHAT_IPC_PREFIX):
+                    payload = _json.loads(line[len(CHAT_IPC_PREFIX):])
+                    if payload.get('type') == 'complete':
+                        reply = payload.get('data')
+                        if isinstance(reply, str) and reply.strip():
+                            expr = self._detect_reply_expression(reply)
+                            self.face_window.set_expression(expr)
+                            QTimer.singleShot(3500, lambda: self.face_window.set_expression(Expression.NEUTRAL))
+            except Exception:
+                pass
 
     def stop_daemon(
         self,

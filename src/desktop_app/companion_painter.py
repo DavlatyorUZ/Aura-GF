@@ -66,7 +66,13 @@ def _boot(p, x):
 
 def _eye(p, x, y, pose, mirrored=False):
     """Stepped oval iris, dark upper lashes and a luminous lower iris."""
-    height = max(1, round((1 - pose.blink) * (13 if pose.attentive else 12)))
+    if pose.expression == 'happy' and pose.blink < 0.6:
+        _poly(p, [(x-1, y+5), (x+2, y+2), (x+8, y+2), (x+11, y+5),
+                  (x+10, y+7), (x+7, y+4), (x+3, y+4), (x, y+7)], 'ink')
+        _poly(p, [(x+1, y-4), (x+8, y-4), (x+8, y-3), (x+1, y-3)], 'hair_shadow')
+        return
+    eye_h = 14 if pose.expression == 'surprised' else 13 if pose.attentive else 12
+    height = max(1, round((1 - pose.blink) * eye_h))
     if height < 4:
         _poly(p, [(x,y+4),(x+3,y+6),(x+7,y+6),(x+10,y+3),
                   (x+10,y+5),(x+7,y+8),(x+3,y+8),(x,y+6)], 'ink')
@@ -88,6 +94,8 @@ def _eye(p, x, y, pose, mirrored=False):
     _box(p, 3, 2, 3, 4, 'white')
     _box(p, 3, 6, 1, 1, 'ice')
     _box(p, 7, 8, 2, 2, 'white')
+    if pose.expression == 'excited':
+        _box(p, 5, 5, 2, 2, 'ice')
     p.restore()
     _poly(p, [(-1,3),(0,0),(2,-2),(7,-2),(10,0),(11,3),(9,2),
               (7,0),(3,0),(1,2),(1,5),(0,6)], 'ink')
@@ -98,6 +106,17 @@ def _eye(p, x, y, pose, mirrored=False):
     p.restore()
     if pose.expression in ('concerned', 'sad'):
         _poly(p, [(x,y-5),(x+8,y-3),(x+8,y-2),(x,y-4)], 'hair_shadow')
+    elif pose.expression == 'surprised':
+        _poly(p, [(x,y-7),(x+8,y-7),(x+8,y-6),(x,y-6)], 'hair_shadow')
+    elif pose.expression == 'excited':
+        _poly(p, [(x+1,y-6),(x+8,y-5),(x+8,y-4),(x+1,y-5)], 'hair_shadow')
+    elif pose.expression == 'curious':
+        if mirrored:
+            _poly(p, [(x,y-6),(x+8,y-4),(x+8,y-3),(x,y-5)], 'hair_shadow')
+        else:
+            _poly(p, [(x,y-4),(x+8,y-4),(x+8,y-3),(x,y-3)], 'hair_shadow')
+    elif pose.expression == 'thinking':
+        _poly(p, [(x,y-4),(x+8,y-5),(x+8,y-4),(x,y-3)], 'hair_shadow')
 
 
 def _greeting_arm(p, pose):
@@ -174,13 +193,35 @@ def _head(p, pose):
     _box(p, 69, 72, 5, 3, 'blush')
     _box(p, 35, 72, 2, 1, 'skin')
     _box(p, 71, 72, 2, 1, 'skin')
+    if pose.expression in ('happy', 'excited'):
+        _box(p, 33, 71, 8, 4, 'blush')
+        _box(p, 68, 71, 7, 4, 'blush')
+        _box(p, 35, 71, 2, 1, 'white')
+        _box(p, 70, 71, 2, 1, 'white')
     _eye(p, 36, 61, pose)
     _eye(p, 62, 61, pose, mirrored=True)
-    opening = 3 + round(pose.mouth * 3)
-    _poly(p, [(50,74),(55,74),(56,75),(55,75+opening),
-              (53,76+opening),(51,75+opening)], 'mouth')
-    _box(p, 52, 75 + opening - 1, 3, 2, 'tongue')
-    _box(p, 51, 74, 4, 1, 'blush')
+    if pose.mouth > 0.05:
+        open_h = round(pose.mouth * 5)
+        w = 2 + round(pose.mouth * 2)
+        _poly(p, [(53-w, 74), (53+w, 74), (54+w, 75+open_h),
+                  (53, 76+open_h), (52-w, 75+open_h)], 'mouth')
+        if open_h >= 2:
+            _box(p, 52, 75 + open_h - 1, 3, 2, 'tongue')
+            _box(p, 52, 74, 3, 1, 'white')
+        _box(p, 51, 73, 4, 1, 'blush')
+    elif pose.thinking or pose.expression == 'thinking':
+        _box(p, 52, 75, 3, 2, 'mouth')
+        _box(p, 53, 75, 1, 1, 'snow_shadow')
+    elif pose.expression == 'surprised':
+        _box(p, 52, 74, 3, 4, 'mouth')
+        _box(p, 53, 75, 1, 2, 'tongue')
+    elif pose.expression in ('happy', 'excited'):
+        _poly(p, [(49,74),(51,76),(55,76),(57,74),(55,77),(51,77)], 'mouth')
+        _box(p, 52, 75, 3, 1, 'blush')
+    elif pose.expression in ('sad', 'concerned'):
+        _poly(p, [(50,76),(53,74),(56,76),(53,75)], 'mouth')
+    else:
+        _poly(p, [(50,75),(53,76),(56,75),(53,77)], 'mouth')
     # Long side locks, separated curved fringe and a tapered central lock.
     _poly(p, [(23,49),(28,42),(35,37),(43,33),(51,32),(60,32),
               (67,35),(72,40),(75,46),(77,55),(80,62),(76,61),
@@ -248,6 +289,12 @@ def draw_companion(p: QPainter, pose: CompanionPose):
     _box(p, 61, 89, 1, 7, 'blue_light')
     _greeting_arm(p, pose)
     if pose.thinking:
+        shift = max(-1, min(1, pose.gaze))
+        _box(p, 86, 44 - shift, 2, 2, 'blue_light')
+        _box(p, 89, 36 + shift, 3, 3, 'cyan')
+        _box(p, 90, 37 + shift, 1, 1, 'ice')
+        _box(p, 93, 26 - shift, 4, 4, 'blue_light')
+        _box(p, 94, 27 - shift, 2, 2, 'ice')
         for index in range(3):
             _box(p, 86 + index*4, 81 - (1 if pose.gaze == index-1 else 0), 2, 2, 'blue_light')
     if pose.wave:

@@ -141,3 +141,38 @@ def test_greeting_stays_inside_the_click_region_at_different_sizes(companion, sc
         assert all(window.mask().contains(QPoint(x, y))
                    for y in range(image.height()) for x in range(image.width())
                    if image.pixelColor(x, y).alpha() > 10)
+
+
+@pytest.mark.parametrize('expression', ['happy', 'surprised', 'thinking', 'curious', 'excited', 'sad', 'concerned'])
+def test_each_expression_produces_a_distinct_visual_pose(expression):
+    from desktop_app.companion_painter import CompanionPose, render_companion
+    neutral = render_companion(CompanionPose(expression='neutral'))
+    expressed = render_companion(CompanionPose(expression=expression))
+    assert neutral != expressed
+
+
+def test_speaking_mouth_has_greater_vertical_opening_than_resting():
+    from desktop_app.companion_painter import CompanionPose, render_companion
+    from desktop_app.themes import COMPANION_COLORS
+
+    resting = render_companion(CompanionPose(mouth=0.0))
+    speaking = render_companion(CompanionPose(mouth=1.0))
+    mouth_colours = {COMPANION_COLORS['mouth'], COMPANION_COLORS['tongue']}
+    # Mouth region is around x=48..58, y=73..82
+    resting_mouth_pixels = sum(resting.pixelColor(x, y).name() in mouth_colours for x in range(48, 59) for y in range(73, 83))
+    speaking_mouth_pixels = sum(speaking.pixelColor(x, y).name() in mouth_colours for x in range(48, 59) for y in range(73, 83))
+    assert speaking != resting
+    assert speaking_mouth_pixels > resting_mouth_pixels
+
+
+
+def test_thinking_pose_renders_floating_thought_particles():
+    from desktop_app.companion_painter import CompanionPose, render_companion
+    resting = render_companion(CompanionPose(thinking=False))
+    thinking = render_companion(CompanionPose(thinking=True))
+    # Thought particles appear near upper right hood/head area (x=80..98, y=24..55)
+    resting_upper = sum(resting.pixelColor(x, y).alpha() > 100 for x in range(82, 98) for y in range(24, 55))
+    thinking_upper = sum(thinking.pixelColor(x, y).alpha() > 100 for x in range(82, 98) for y in range(24, 55))
+    assert thinking_upper > resting_upper
+
+

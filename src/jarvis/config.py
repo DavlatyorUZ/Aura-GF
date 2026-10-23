@@ -36,6 +36,13 @@ SUPPORTED_CHAT_MODELS: Dict[str, Dict[str, str]] = {
         "size": "~18GB",
         "vram": "24GB+",
     },
+    "qwen2.5:1.5b": {
+        "openai_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "name": "Qwen 2.5 1.5B (Fast & GPU Accelerated)",
+        "description": "Ultra fast, reliable conversational model, GPU accelerated; ~1.0GB download",
+        "size": "~1.0GB",
+        "vram": "2GB+",
+    },
     "qwen3.5:0.8b": {
         "openai_id": "Qwen/Qwen3.5-0.8B",
         "name": "Qwen 3.5 0.8B (Low-VRAM)",
@@ -55,7 +62,7 @@ SUPPORTED_OPENAI_EMBEDDING_MODEL_IDS = ("nomic-ai/nomic-embed-text-v1.5",)
 # provider an unset fast model resolves to the active chat model instead —
 # this pull-name only exists on Ollama.
 DEFAULT_FAST_MODEL = "gemma4:e2b"
-SUPPORTED_FAST_MODEL_IDS = ("qwen3.5:0.8b", "gemma4:e2b", "gemma4:e4b")
+SUPPORTED_FAST_MODEL_IDS = ("qwen2.5:1.5b", "qwen3.5:0.8b", "gemma4:e2b", "gemma4:e4b")
 
 
 def get_model_recommendations(provider: str) -> dict[str, tuple[str, ...]]:
