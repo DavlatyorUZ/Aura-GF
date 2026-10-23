@@ -1819,6 +1819,7 @@ class JarvisSystemTray:
         # Note: Creating the face window also initializes the SpeakingState singleton
         # in the main thread, which is important for cross-thread signal delivery
         self.face_window = FaceWindow()
+        self.face_window.chat_requested.connect(self.show_chat)
 
         # Create dictation history window (hidden by default)
         from desktop_app.dictation_history import DictationHistoryWindow

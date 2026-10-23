@@ -20,6 +20,14 @@ configuration are loaded, with an actionable error. The POSIX development
 launcher validates interpreter versions before creating a virtual environment,
 selects a supported candidate and rejects an unsupported existing environment.
 
+On Windows, `Start_Jarvis.bat` invokes the source launcher with Windows
+PowerShell 5.1-compatible arguments. The launcher resolves its own directory,
+including paths with spaces, and uses an existing `venv`, `.venv` or
+`.mamba_env` interpreter. Normal launches use a hidden process with UTF-8
+stdout and stderr logs under the local Jarvis log directory; the debug entry
+point retains a console. Missing runtimes and immediate startup exits report
+an actionable error. Existing GPU environment choices are preserved.
+
 ## Package Structure
 
 ```
@@ -158,63 +166,49 @@ reply paths publish state without importing the desktop or Qt. The face
 observes that state during animation in both bundled and subprocess modes.
 
 
-The face is a compact frameless, translucent tool window, always on top without
-accepting focus or activating when shown. macOS keeps the tool window visible
-when another application is active. It paints an angular amber mask made from
-straight connected light beams, small illuminated junctions, diamond eyes,
-cheek accents and a straight mouth seam. Slow paired energy highlights travel
-around the fixed beams on a twelve-second cycle, with greater intensity during
-processing. Fine amber strokes and fixed glowing junctions define the mask,
-with a narrow ink outline for contrast on light backgrounds. The mask is 70%
-of the design width and 1.3 times as tall as it is wide. Diamond eyes sit 15%
-of its height above the centre, and the mouth spans 70% of its width at 25%
-of its height below the centre. Pupils are flat amber lights. There is
-no background panel, grid, title bar, subtitle area or persistent toolbar.
-Eyes paint only their outlines and small lit pupils, with transparent
-interiors and surroundings. Contrast and glow follow those strokes; there is
-no filled eye halo to obscure desktop content.
+The companion is a frameless, translucent tool window, always on top without
+accepting focus or activating when shown. macOS keeps it visible when another
+application is active. It depicts a full-body pixel anime character with blue
+bobbed hair, a white hood, blue headphones, a hoodie and boots. All anatomy,
+clothing, highlights and expressions are drawn from Python geometry through
+`companion_painter.py`; no character images, sprite sheets or downloads are
+required. Colours come from `themes.py`. Geometry is rasterised on a logical
+pixel grid and scaled without smoothing to keep its pixel-art appearance.
 
-The default footprint is 220 × 280 logical pixels, with zero layout margins.
-Vector strokes, glows and motion scale together with the face geometry.
-Presence opacity and state-entry animations follow the same frame-level state
-observation for in-process and file-backed subprocess updates.
-Asleep and idle states have lower window opacity than active listening,
-thinking, speaking or dictation. The native input region follows the face's
-contour with enough padding for breathing and active cues. Empty corners and
-lateral margins pass clicks through to the desktop.
-Dragging the face uses native window movement where supported, with a pointer
-position fallback. A right-click menu hides the face; the tray shows it again
-without activating it. Visibility remains user-controlled after launch.
+The default footprint is 240 by 380 logical pixels, with zero layout margins.
+The background is transparent. A compact themed status capsule identifies
+Standby, Ready, Listening, Thinking, Speaking, Recording and Transcribing.
+Status text describes activity, never an assistant reply. Standby keeps the
+character's eyes open; it does not claim the daemon is ready. Starting the
+daemon lets its activity publications take over. Stopping the daemon, a crash
+or the setup wizard resets activity to ASLEEP and the capsule to Standby.
 
-The face's character comes from restrained expressions and uninterrupted
-negative space. Awake breathing changes its size by at most 0.6%, without
-moving or tilting the window. Natural brief blinks occur 4.5 to 7.5 seconds
-apart. Idle glances last 3.2 seconds, stay within 2.5 logical pixels horizontally
-and one vertically, and are separated by 9 to 15 seconds of rest. The face
-does not track the pointer or analyse the desktop.
+Awake animation includes gentle breathing, brief blinks 4.5 to 7.5 seconds
+apart and small independent hair movement. Listening uses attentive eyes;
+thinking uses shifting gaze and processing dots; speaking animates the mouth
+and status bars without measuring audio. Dictation has a recording indicator;
+transcription combines that indicator's colour with a processing spinner.
+A user-triggered greeting articulates the sleeve and hand for 2.4 seconds,
+without moving the window or changing the assistant's activity state.
 
-- **Asleep:** straight closed eye beams and a still, dim silhouette after settling.
-- **Idle:** soft breathing, a straight mask seam and occasional blinks and glances.
-- **Listening:** receptive eyes and a close-fitting amber echo on a two-second cycle.
-- **Thinking:** pupils look gently upwards while the flowing beam highlights intensify.
-- **Speaking:** the mouth seam opens into a small, smoothly tapered waveform. It indicates
-  the speaking state without measuring or recording audio.
-- **Dictation:** a close-fitting coral outline breathes during recording; processing
-  combines that outline with the thinking expression.
+Animation follows monotonic elapsed time, with bounded work after an event-loop
+stall. Hidden windows stop their timer and read the latest activity on show.
+Standby checks state every 250 ms, idle uses a lower frame rate and active
+states or greetings refresh every 33 ms. The native input region covers all
+animated poses with small padding; blank corners and lateral margins pass
+clicks through to the desktop. Dragging uses native window movement where
+supported, with a pointer-position fallback. Double-clicking opens the shared
+text chat, including when voice is unavailable. A right-click menu can wave,
+hide the companion or invoke tray actions. Visibility remains user-controlled.
+The companion does not inspect the desktop, track the pointer or capture audio.
 
-Animation follows monotonic elapsed time, with smooth activation and state
-blends independent of frame rate. Each frame does a bounded amount of work,
-including after a long event-loop stall. Hidden faces stop their animation
-timer and observe the latest state immediately when shown. Visible resting
-faces use a lower refresh rate, with a 250 ms state check when fully asleep.
-`scripts/capture_face_preview.py` renders the actual widget on light and dark
-backgrounds using isolated in-memory state and a fixed clock.
-
-**Face state follows the daemon lifecycle**: the face animates from states written by the daemon (`JarvisStateManager`, file-backed for cross-process use). Whenever the daemon goes down — the tray's Turn Off / Turn On control, an unexpected exit, or the setup wizard pausing it — the tray resets the face to `ASLEEP` so it never looks awake while no daemon is running. Starting the daemon lets the daemon's own state writes take over again.
+`scripts/capture_face_preview.py` renders the real widget on light and dark
+backgrounds with an isolated state and clock. PNG captures are test and
+review outputs only; the runtime never loads them.
 
 ### Face context menu
 
-Right-clicking the face opens a themed, opaque menu with a Hide Face action
+Right-clicking the face opens a themed, opaque menu with Wave and Hide Companion actions
 and every tray action, in tray order with the same separators. The actions are
 shared with the tray, so status labels, enabled states, callbacks and
 platform-specific recovery controls stay consistent while either menu is open.

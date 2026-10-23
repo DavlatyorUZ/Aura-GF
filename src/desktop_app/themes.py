@@ -38,6 +38,17 @@ COLORS = {
     "error_light": "#f87171",
 }
 
+# The procedural companion uses a compact pixel-art palette.
+COMPANION_COLORS = {
+    'ink': '#17294f', 'outline': '#243d70', 'blue_dark': '#2651ad',
+    'blue': '#407bea', 'blue_light': '#77b2ff', 'ice': '#b9daff',
+    'white': '#f5fcff', 'snow_shadow': '#d6e8ff', 'cyan': '#72eeff',
+    'hair_shadow': '#648bd5', 'hair': '#9bc8ff', 'hair_light': '#c6e7ff',
+    'skin_shadow': '#e6b5ac', 'skin': '#ffe4d3', 'skin_light': '#fff0e0',
+    'blush': '#f3b1c0', 'mouth': '#ba5878', 'tongue': '#ff96af',
+    'shadow': '#bec1e6',
+}
+
 CHAT_THEME_STYLESHEET = f"""
     QMainWindow#chatWindow, QWidget#phoneShell {{ background: transparent; }}
     QWidget#chatSurface {{

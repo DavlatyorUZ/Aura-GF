@@ -66,7 +66,6 @@ def main():
         face.face._animation_timer.stop()
         face.face._state_manager.set_state(JarvisState.IDLE)
         face.face._animate()
-        face.face._activation_level = 1.0
         capture(face, 'face.png')
         face.close()
         if options.face_only:

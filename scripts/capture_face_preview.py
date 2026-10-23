@@ -16,6 +16,8 @@ from unittest.mock import patch
 
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 os.environ['QT_SCALE_FACTOR'] = '1'
+if os.name == 'nt':
+    os.environ.setdefault('QT_QPA_FONTDIR', str(Path(os.environ['WINDIR']) / 'Fonts'))
 
 from PyQt6.QtCore import Qt, QRectF
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter
@@ -62,7 +64,9 @@ def main():
         stack.enter_context(patch.object(face_widget, 'debug_log'))
         stack.enter_context(patch.object(face_widget.random, 'uniform', side_effect=lambda low, high: (low + high) / 2))
         states = list(JarvisState)
-        sheet = QImage(220 * len(states), 624, QImage.Format.Format_ARGB32_Premultiplied)
+        width, height = face_widget.FaceWidget.DESIGN_WIDTH, face_widget.FaceWidget.DESIGN_HEIGHT
+        row_height = height + 32
+        sheet = QImage(width * len(states), row_height * 2, QImage.Format.Format_ARGB32_Premultiplied)
         painter = QPainter(sheet)
         for index, current in enumerate(states):
             clock.now = 1000.0
@@ -79,8 +83,8 @@ def main():
             capture = window.grab().toImage()
             capture.save(str(options.output_dir / f'{current.value}.png'))
             board = composite(capture, window.windowOpacity(), current.value.replace('_', ' ').upper())
-            painter.drawImage(index * 220, 0, board.copy(0, 0, 220, 312))
-            painter.drawImage(index * 220, 312, board.copy(220, 0, 220, 312))
+            painter.drawImage(index * width, 0, board.copy(0, 0, width, row_height))
+            painter.drawImage(index * width, row_height, board.copy(width, 0, width, row_height))
             window.close()
         painter.end()
         sheet.save(str(options.output_dir / 'states-light-dark.png'))
@@ -94,10 +98,10 @@ def main():
             app.processEvents()
             window.face._animation_timer.stop()
             frames = []
-            # A bounded glance makes its maximum idle movement visible in the preview.
+            # Exercise the greeting and a full blink cycle before active states.
             stack.enter_context(patch.object(face_widget.random, 'uniform', side_effect=lambda low, high: high))
             for current, duration in (
-                (JarvisState.IDLE, 16),
+                (JarvisState.IDLE, 8),
                 (JarvisState.LISTENING, 3),
                 (JarvisState.THINKING, 4),
                 (JarvisState.SPEAKING, 4),
@@ -105,6 +109,8 @@ def main():
             ):
                 state.state = current
                 window.face._animate()
+                if current == JarvisState.IDLE:
+                    window.face.wave()
                 for _ in range(duration * 20):
                     clock.now += 1 / 20
                     window.face._animate()

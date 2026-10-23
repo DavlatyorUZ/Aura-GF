@@ -24,10 +24,10 @@ Address Jarvis by name anywhere in a sentence and follow up naturally. Speech re
 Your diary and knowledge graph stay on your computer. Speech and chat models run locally when you use a local model server. Sensitive information is redacted before reaching model context or the saved diary. Web search, weather and connected tools use the network for those requests.
 
 <p align="center">
-  <img src="docs/img/face.png" alt="Jarvis's floating amber face, with no frame or background" width="420">
+  <img src="docs/img/face.png" alt="Jarvis's code-drawn pixel anime companion on a transparent background" width="420">
 </p>
 
-<p align="center"><sub>A voice, a face, and a place in the conversation.</sub></p>
+<p align="center"><sub>A voice, an animated pixel companion, and a place in the conversation.</sub></p>
 
 ## Quick Install
 
@@ -46,7 +46,11 @@ Your diary and knowledge graph stay on your computer. Speech and chat models run
 
 > “Jarvis, help me think through my day.”
 
-Right-click the face or use the tray menu to open **Chat**. Text replies are silent.
+Double-click the companion, right-click it or use the tray menu to open **Chat**. Text replies are silent.
+
+The pixel companion blinks, breathes and reacts to listening and speaking.
+Use **Wave** in its right-click menu for a greeting. **Standby** means the
+assistant has not started; it keeps its eyes open while waiting.
 
 <details>
 <summary><strong>Hardware and model choices</strong></summary>
