@@ -174,6 +174,12 @@ clothing, highlights and expressions are drawn from Python geometry through
 `companion_painter.py`; no character images, sprite sheets or downloads are
 required. Colours come from `themes.py`. Geometry is rasterised on a logical
 pixel grid and scaled without smoothing to keep its pixel-art appearance.
+The silhouette has a broad rounded hood, a small blue crown, large glossy blue
+eyes, a tapered central fringe and layered bobbed side locks. The oversized
+white hoodie has blue cuffs and a shaded blue hem above dark leggings and
+white-blue boots. A raised greeting hand remains visible in front of the hood
+beside the cheek. Its animated rotation eases into and out of this resting
+pose. Blink and mouth inputs are clamped to their closed/open endpoints.
 
 The default footprint is 240 by 380 logical pixels, with zero layout margins.
 The background is transparent. A compact themed status capsule identifies

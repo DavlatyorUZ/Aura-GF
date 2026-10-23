@@ -13,6 +13,26 @@ from jarvis.activity import JarvisState
 pytestmark = pytest.mark.unit
 
 
+@pytest.mark.parametrize('feature', ['blink', 'mouth'])
+def test_facial_motion_stays_within_its_end_poses(feature):
+    from desktop_app.companion_painter import CompanionPose, render_companion
+
+    for outside, endpoint in ((-3, 0), (4, 1)):
+        assert render_companion(CompanionPose(**{feature: outside})) == render_companion(
+            CompanionPose(**{feature: endpoint}))
+
+
+def test_resting_character_has_a_visible_raised_greeting_hand():
+    from desktop_app.companion_painter import CompanionPose, render_companion
+    from desktop_app.themes import COMPANION_COLORS
+
+    image = render_companion(CompanionPose())
+    skin = {COMPANION_COLORS[key] for key in ('skin', 'skin_light', 'skin_shadow')}
+    # The hand is visible in front of the lower left hood, beside the cheek.
+    assert sum(image.pixelColor(x, y).name() in skin
+               for y in range(78, 91) for x in range(23, 36)) > 25
+
+
 @pytest.fixture
 def companion(qapp, monkeypatch):
     state = SimpleNamespace(state=JarvisState.ASLEEP)
