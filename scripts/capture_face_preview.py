@@ -101,10 +101,13 @@ def main():
             # Exercise the greeting and a full blink cycle before active states.
             stack.enter_context(patch.object(face_widget.random, 'uniform', side_effect=lambda low, high: high))
             for current, duration in (
-                (JarvisState.IDLE, 8),
+                (JarvisState.IDLE, 11),
                 (JarvisState.LISTENING, 3),
-                (JarvisState.THINKING, 4),
-                (JarvisState.SPEAKING, 4),
+                (JarvisState.THINKING, 3),
+                (JarvisState.LAUNCHING, 3),
+                (JarvisState.SPEAKING, 3),
+                (JarvisState.DICTATING, 3),
+                (JarvisState.DICTATION_PROCESSING, 3),
                 (JarvisState.ASLEEP, 3),
             ):
                 state.state = current

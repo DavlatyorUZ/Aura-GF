@@ -1624,7 +1624,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         action_plan, _full_catalog_names
     )
     allowed_tools = list(routed_tools)
-    _selection_source = strategy.value
+    _selection_source = "direct" if direct_mode else strategy.value
     if action_plan and not _plan_under_specified:
         for _plan_name in tool_names_in_plan(action_plan, _full_catalog_names):
             if _plan_name not in allowed_tools:

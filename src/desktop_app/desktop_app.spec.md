@@ -172,34 +172,37 @@ application is active. It depicts a full-body pixel anime character with blue
 bobbed hair, a white hood, blue headphones, a hoodie and boots. All anatomy,
 clothing, highlights and expressions are drawn from Python geometry through
 `companion_painter.py`; no character images, sprite sheets or downloads are
-required. Colours come from `themes.py`. Anatomical colour contours in `companion_geometry.py` use a 312 by 432
-pixel grid. Cached vector paths retain the reference silhouette, face and
-clothing details. Geometry is rasterised and scaled without smoothing to keep its pixel-art appearance.
-The silhouette has a broad rounded hood, a small blue crown, large glossy blue
-eyes, a tapered central fringe and layered bobbed side locks. The oversized
-white hoodie has blue cuffs and a shaded blue hem above dark leggings and
-white-blue boots. The left arm rests by the hoodie. Greeting raises the hand beside the cheek;
-thinking brings the fingertips towards the chin. Idle pauses include a two-handed
-phone animation. Application launch activity animates the phone with an action sparkle. Blink and mouth inputs are clamped to their closed/open endpoints.
+required. Colours come from `themes.py`. Anatomical colour contours in
+`companion_geometry.py` use a 234 by 268 pixel grid. All eight activity poses
+have independently authored sleeve, eye, mouth, hair and decoration surfaces.
+Cached vector paths retain the reference silhouette, face and clothing details.
+Boundary coverage and translucent ground illumination suit light and dark desktops.
+Geometry is rasterised and scaled without smoothing.
 
-The default footprint is 180 by 280 logical pixels, with zero layout margins.
-The background is transparent. A compact themed status capsule identifies
-Standby, Ready, Listening, Thinking, Speaking, Recording and Transcribing.
-Status text describes activity, never an assistant reply. Standby keeps the
-character's eyes open; it does not claim the daemon is ready. Starting the
-daemon lets its activity publications take over. Stopping the daemon, a crash
-or the setup wizard resets activity to ASLEEP and the capsule to Standby.
+The default footprint is 180 by 240 logical pixels, with zero layout margins.
+Its themed capsule identifies Standby, Ready, Listening, Thinking, Opening app,
+Speaking, Recording and Transcribing. Status text describes activity, never an
+assistant reply. Standby has closed, resting eyes and floating sleep marks; Ready
+has open eyes, lowered hands and a small closed smile. Starting the daemon lets
+its activity publications take over. Stopping the daemon, a crash or the setup
+wizard resets activity to ASLEEP and the capsule to Standby.
 
-Awake animation includes gentle breathing, brief blinks 4.5 to 7.5 seconds
-apart and small independent hair movement. Listening uses attentive, curious eyes;
-thinking uses shifting gaze, thoughtful brow, pursed mouth and floating glowing thought
-particles beside the hood; speaking articulates syllabic mouth movement and cheerful
-expressions. The resting mouth is a closed pixel smile; speech alone opens it. All accepted expression
-types (happy, surprised, thinking, curious, excited, concerned, sad, neutral) produce
-distinct facial geometry, blush and brow cues. Dictation has a recording indicator;
-transcription combines that indicator's colour with a processing spinner.
-Thinking adds a gentle head tilt and three stepped particles. Eye closure
-compresses the authored eye contours; the mouth uses discrete pixel shapes.
+Listening holds a hand beside the headphones with blue sound marks. Thinking
+holds a hand under the chin, with gaze changes, a question mark and three dots.
+Launching holds a blue application panel with a travelling glint. Speaking uses
+an outward hand gesture and syllabic mouth articulation. Dictating has a cheerful
+recording pose, red microphone and sound marks. Dictation processing holds a blue
+transcription panel with processing marks. Inactive pauses include a separate
+two-handed phone interaction after eight seconds at Ready. Activity animation
+starts when that state is observed, independently of the window's lifetime.
+
+Awake animation includes gentle breathing, brief blinks 4.5 to 7.5 seconds apart
+and small independent hair movement. Idle has a closed mouth; expressive smiles
+in launching and recording retain their reference shapes. Explicit blink and
+mouth inputs are clamped. Accepted expressions (happy, surprised, thinking,
+curious, excited, concerned, sad, neutral) have distinct facial geometry.
+The upper body and sleeves breathe together above an overlapping trouser seam.
+
 Voice readiness after standby and the Wave action trigger a 2.4-second greeting
 that articulates the sleeve and hand around the shoulder,
 without moving the window or changing the assistant's activity state.
@@ -567,3 +570,5 @@ retains its separate viewer lifetime. Per-summary failures remain isolated so
 the stream can continue processing later entries.
 
 The trouser top overlaps beneath the breathing hoodie, keeping its waist opaque throughout the motion. Separate sleeve contours allow both arms to change posture without leaving fragments of a former pose.
+
+Sound-mark strips vary their height independently during listening, speaking and recording. Eye closure covers the eye surfaces while retaining the fringe and brows. One cached native silhouette unions every activity, phone posture and greeting extreme for the input region.

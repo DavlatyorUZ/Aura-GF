@@ -25,10 +25,14 @@ def test_facial_motion_stays_within_its_end_poses(feature):
 def test_greeting_character_has_a_visible_raised_hand():
     from desktop_app.companion_painter import CompanionPose, render_companion
 
-    image = render_companion(CompanionPose(wave=0.001)).scaled(104, 144)
-    # The hand is visible in front of the lower left hood, beside the cheek.
-    assert sum(image.pixelColor(x, y).red() > image.pixelColor(x, y).blue() + 15
-               for y in range(78, 91) for x in range(23, 36)) > 25
+    resting = render_companion(CompanionPose())
+    image = render_companion(CompanionPose(wave=0.001))
+    def hand_pixels(frame):
+        return sum(frame.pixelColor(x,y).red() > frame.pixelColor(x,y).blue()+15
+                   for y in range(round(frame.height()*.53),round(frame.height()*.75))
+                   for x in range(round(frame.width()*.62),round(frame.width()*.9)))
+    assert hand_pixels(image) > hand_pixels(resting)+20
+
 
 
 @pytest.fixture
@@ -174,13 +178,12 @@ def test_speaking_mouth_has_greater_vertical_opening_than_resting():
 
 
 
-def test_thinking_pose_renders_floating_thought_particles():
+def test_thinking_pose_renders_a_floating_question_mark():
     from desktop_app.companion_painter import CompanionPose, render_companion
-    resting = render_companion(CompanionPose(thinking=False)).scaled(104, 144)
-    thinking = render_companion(CompanionPose(thinking=True)).scaled(104, 144)
-    # Thought particles appear beside the hood, outside the face.
-    resting_upper = sum(resting.pixelColor(x, y).alpha() > 100 for x in range(90, 103) for y in range(72, 82))
-    thinking_upper = sum(thinking.pixelColor(x, y).alpha() > 100 for x in range(90, 103) for y in range(72, 82))
-    assert thinking_upper > resting_upper
-
-
+    resting = render_companion(CompanionPose())
+    thinking = render_companion(CompanionPose(thinking=True))
+    def marks(frame):
+        return sum(frame.pixelColor(x,y).alpha()>100
+                   for x in range(round(frame.width()*.72),round(frame.width()*.95))
+                   for y in range(round(frame.height()*.01),round(frame.height()*.2)))
+    assert marks(thinking) > marks(resting)

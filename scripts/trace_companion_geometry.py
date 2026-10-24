@@ -1,107 +1,209 @@
-"""Author editable colour-contour polygons from the supplied character reference.
+"""Author editable contours for the supplied eight-state companion reference.
 
-This development utility produces Python geometry, not a runtime texture.
-Coordinates are on the original reference grid; anatomical masks give each
-articulated part its own independent paths. Pillow is a development dependency.
+This development tool outputs Python polygons. The application reads no artwork.
 """
 from collections import defaultdict, deque
 from pathlib import Path
 import re
-from PIL import Image, ImageDraw
 import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
-source = Image.open(ROOT / 'tests/fixtures/face/reference.png').convert('RGB')
-# Flat colour ramps retain the deliberate pixel edges without compression noise.
-indexed = source.quantize(colors=64, method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
-a = np.array(indexed)
-rgb = np.array(source)
+STATES = ('asleep','idle','listening','thinking','launching','speaking','dictating','dictation_processing')
+CENTRES = (153,386,618,850,1081,1313,1546,1778)
+WIDTH, HEIGHT = 234, 268
+source = Image.open(ROOT/'tests/fixtures/face/state-reference.png').convert('RGB')
+padded=Image.new('RGB',(max(source.width,max(CENTRES)+117),source.height),(247,248,251))
+padded.paste(source,(0,0));source=padded
+crops = [source.crop((centre-117,476,centre+117,744)) for centre in CENTRES]
+board = Image.new('RGB',(WIDTH*8,HEIGHT))
+for index,crop in enumerate(crops):
+    board.paste(crop,(index*WIDTH,0))
+indexed = board.quantize(colors=128,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE)
+indices = np.array(indexed)
 palette = indexed.getpalette()
-# Remove only near-white background connected to the canvas perimeter.
-white = np.min(rgb, axis=2) > 244
-outside = np.zeros(white.shape, dtype=bool)
-queue = deque([(0, 0)])
-outside[0, 0] = True
-while queue:
-    xx, yy = queue.popleft()
-    for nx, ny in ((xx-1,yy),(xx+1,yy),(xx,yy-1),(xx,yy+1)):
-        if 0 <= nx < 512 and 0 <= ny < 512 and white[ny,nx] and not outside[ny,nx]:
-            outside[ny,nx] = True
-            queue.append((nx,ny))
-visible = ~outside
-labels = np.full(a.shape, 'body', dtype=object)
-y, x = np.indices(a.shape)
-labels[y < 301] = 'head'
-labels[y >= 376] = 'legs'
-labels[y >= 447] = 'shadow'
-labels[(x < 145) & (y > 270)] = 'sparkles'
-labels[(x > 360) & (y > 305)] = 'sparkles'
 
-def part(name, points):
-    mask = Image.new('1', source.size)
-    ImageDraw.Draw(mask).polygon(points, fill=1)
-    labels[np.array(mask).astype(bool)] = name
 
-part('arm', [(158,275),(187,272),(205,282),(205,301),(224,307),(225,334),
-             (211,351),(194,361),(176,362),(160,351),(148,330),(148,304),(158,301),(153,291)])
-part('right_arm', [(295,323),(314,320),(351,351),(352,399),(312,403),(305,372),(290,350)])
-part('left_eye', [(197,216),(238,216),(238,261),(197,261)])
-part('right_eye', [(274,217),(315,217),(315,264),(274,264)])
-part('mouth', [(241,260),(264,260),(264,281),(241,281)])
-part('hair_tip', [(332,211),(342,228),(352,239),(364,243),(357,252),(346,252),(334,246)])
+def foreground(rgb):
+    barrier = np.min(rgb,axis=2)<225
+    outside = np.zeros(barrier.shape,dtype=bool)
+    queue = deque()
+    for y in range(HEIGHT):
+        for x in (0,WIDTH-1):
+            if not barrier[y,x]: outside[y,x]=True;queue.append((x,y))
+    for x in range(WIDTH):
+        for y in (0,HEIGHT-1):
+            if not barrier[y,x]: outside[y,x]=True;queue.append((x,y))
+    while queue:
+        x,y=queue.popleft()
+        for nx,ny in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)):
+            if 0<=nx<WIDTH and 0<=ny<HEIGHT and not outside[ny,nx] and not barrier[ny,nx]:
+                outside[ny,nx]=True;queue.append((nx,ny))
+    return ~outside
+
+
+def largest_component(mask):
+    remaining=mask.copy();largest=[]
+    for yy,xx in zip(*np.nonzero(mask)):
+        if not remaining[yy,xx]: continue
+        queue=[(int(xx),int(yy))];component=[];remaining[yy,xx]=False
+        while queue:
+            x,y=queue.pop();component.append((x,y))
+            for nx,ny in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)):
+                if 0<=nx<WIDTH and 0<=ny<HEIGHT and remaining[ny,nx]:
+                    remaining[ny,nx]=False;queue.append((nx,ny))
+        if len(component)>len(largest):largest=component
+    result=np.zeros(mask.shape,dtype=bool)
+    for x,y in largest:result[y,x]=True
+    return result
 
 
 def contours(mask):
-    edges = defaultdict(list)
-    height, width = mask.shape
-    for yy, xx in zip(*np.nonzero(mask)):
-        if yy == 0 or not mask[yy-1,xx]: edges[(xx,yy)].append((xx+1,yy))
-        if xx == width-1 or not mask[yy,xx+1]: edges[(xx+1,yy)].append((xx+1,yy+1))
-        if yy == height-1 or not mask[yy+1,xx]: edges[(xx+1,yy+1)].append((xx,yy+1))
-        if xx == 0 or not mask[yy,xx-1]: edges[(xx,yy+1)].append((xx,yy))
-    polygons = []
+    edges=defaultdict(list)
+    height,width=mask.shape
+    for y,x in zip(*np.nonzero(mask)):
+        if y==0 or not mask[y-1,x]:edges[(x,y)].append((x+1,y))
+        if x==width-1 or not mask[y,x+1]:edges[(x+1,y)].append((x+1,y+1))
+        if y==height-1 or not mask[y+1,x]:edges[(x+1,y+1)].append((x,y+1))
+        if x==0 or not mask[y,x-1]:edges[(x,y+1)].append((x,y))
+    polygons=[]
     while edges:
-        start = next(iter(edges))
-        point = start
-        ring = []
+        start=next(iter(edges));point=start;ring=[]
         while True:
-            ring.append(point)
-            following = edges[point].pop()
-            if not edges[point]: del edges[point]
-            point = following
-            if point == start: break
-        simplified = []
-        for i, point in enumerate(ring):
-            prev, nxt = ring[i-1], ring[(i+1) % len(ring)]
-            if (prev[0] == point[0] == nxt[0]) or (prev[1] == point[1] == nxt[1]): continue
-            simplified.append((int(point[0]-94), int(point[1]-44)))
-        if len(simplified) > 2: polygons.append(tuple(simplified))
+            ring.append(point);following=edges[point].pop()
+            if not edges[point]:del edges[point]
+            point=following
+            if point==start:break
+        simplified=[]
+        for i,point in enumerate(ring):
+            previous,following=ring[i-1],ring[(i+1)%len(ring)]
+            if previous[0]==point[0]==following[0] or previous[1]==point[1]==following[1]:continue
+            simplified.append(tuple(map(int,point)))
+        if len(simplified)>2:polygons.append(tuple(simplified))
     return tuple(polygons)
 
-lines = ['"""Editable anatomical colour contours on a 312 by 432 pixel grid.',
-         '', 'Authored with scripts/trace_companion_geometry.py; no runtime image input.',
-         'Each entry contains a shared palette index and closed polygon outlines.', '"""', '', 'PARTS = {']
-for name in ('shadow','legs','body','head','hair_tip','left_eye','right_eye','mouth','mouth_base','arm','right_arm','sparkles'):
-    lines.append(f'    {name!r}: (')
-    part_mask = visible & (labels == name)
-    part_colours = a
-    if name == 'mouth_base':
-        part_mask = np.zeros(a.shape, dtype=bool)
-        part_mask[260:282, 241:265] = True
-        part_colours = a.copy()
-        for row in range(260, 282):
-            part_colours[row, 241:265] = a[row, 239]
-    for colour in range(64):
-        rings = contours(part_mask & (part_colours == colour))
-        if rings:
-            lines.append(f'        ({colour}, (')
-            lines.extend(f'            {ring!r},' for ring in rings)
-            lines.append('        )),')
-    lines.append('    ),')
-lines.append('}')
-(ROOT / 'src/desktop_app/companion_geometry.py').write_text('\n'.join(lines)+'\n', encoding='utf-8')
-colours = tuple('#%02x%02x%02x' % tuple(palette[i*3:i*3+3]) for i in range(64))
-theme = ROOT / 'src/desktop_app/themes.py'
-theme.write_text(re.sub(r'COMPANION_REFERENCE_COLOURS = [^\n]*', 'COMPANION_REFERENCE_COLOURS = '+repr(colours), theme.read_text(encoding='utf-8')), encoding='utf-8')
-print('🎨 Anatomical polygon contours written:', (ROOT / 'src/desktop_app/companion_geometry.py').stat().st_size, 'bytes')
 
+lines=['"""Articulated pixel contours for all eight companion activities.',
+       '', 'Generated by scripts/trace_companion_geometry.py; no runtime artwork input.',
+       'Each surface stores a shared palette index and closed integer polygons.', '"""','','POSES = {']
+features={}
+render_colours=[]
+render_colour_indices={}
+def surface_colour(index,alpha):
+    rgb=tuple(palette[index*3:index*3+3])
+    key=(*rgb,int(alpha))
+    if key not in render_colour_indices:
+        render_colour_indices[key]=len(render_colours)
+        render_colours.append(('#%02x'%alpha if alpha<255 else '#')+'%02x%02x%02x'%rgb)
+    return render_colour_indices[key]
+
+y,x=np.indices((HEIGHT,WIDTH))
+for index,state in enumerate(STATES):
+    rgb=np.array(crops[index]);colours=indices[:,index*WIDTH:(index+1)*WIDTH]
+    visible=foreground(rgb);character=largest_component(visible)
+    alpha=np.full(visible.shape,255,dtype=np.uint8)
+    # Recover boundary coverage against the reference's pale backdrop. Interior
+    # colours stay opaque, including enclosed white clothing and eye highlights.
+    interior=visible.copy()
+    interior[1:] &= visible[:-1];interior[:-1] &= visible[1:]
+    interior[:,1:] &= visible[:,:-1];interior[:,:-1] &= visible[:,1:]
+    background=np.array((247,248,251),dtype=float)
+    colours=colours.copy()
+    for by,bx in zip(*np.nonzero(visible&~interior)):
+        top,bottom=max(0,by-2),min(HEIGHT,by+3)
+        left,right=max(0,bx-2),min(WIDTH,bx+3)
+        candidates=rgb[top:bottom,left:right].reshape(-1,3).astype(float)
+        darkest=candidates[np.argmin(candidates.mean(axis=1))]
+        denominator=background-darkest
+        channels=denominator>30
+        if not np.any(channels):continue
+        coverage=float(np.clip(np.mean((background-rgb[by,bx])[channels]/denominator[channels]),0,1))
+        if coverage<.94:
+            alpha[by,bx]=max(32,min(255,round(coverage*8)*32))
+            distances=np.sum((np.array(palette[:384]).reshape(-1,3).astype(float)-darkest)**2,axis=1)
+            colours[by,bx]=np.argmin(distances)
+    labels=np.full(visible.shape,'body',dtype=object)
+    labels[y>=215]='legs';labels[visible&~character]='decor'
+    # Ground illumination is translucent on either desktop theme. Preserve the
+    # complete boot rectangles while separating the surrounding source shadow.
+    dark=(np.min(rgb,axis=2)<100)&(y>=225)&(x>75)&(x<165)
+    boot=np.zeros(visible.shape,dtype=bool)
+    for side in (x<117,x>=117):
+        sy,sx=np.nonzero(dark&side)
+        if len(sx):boot[225:int(sy.max())+2,int(sx.min())-1:int(sx.max())+2]=True
+    ground=visible&(y>=248)&~boot
+    labels[ground]='shadow'
+    ground_colour=int(np.argmin(np.sum((np.array(palette[:384]).reshape(-1,3).astype(float)-(100,170,255))**2,axis=1)))
+    colours[ground]=ground_colour
+    for gy,gx in zip(*np.nonzero(ground)):
+        strength=float(np.clip((255-float(rgb[gy,gx].min()))/170,0,.6))
+        alpha[gy,gx]=max(16,min(160,round(strength*16)*16))
+    # Hands and sleeves are independent, while the torso retains its shared contour.
+    def polygon_mask(points):
+        image=Image.new('1',(WIDTH,HEIGHT))
+        ImageDraw.Draw(image).polygon(points,fill=1)
+        return np.array(image,dtype=bool)
+    left=polygon_mask([(95,162),(100,170),(97,183),(89,195),(88,207),(83,216),
+                       (70,218),(63,211),(64,201),(73,185),(83,172)])
+    right=polygon_mask([(139,162),(151,169),(161,185),(172,201),(172,211),
+                        (164,219),(151,217),(145,207),(145,195),(138,182),(135,170)])
+    if state=='speaking':
+        right=polygon_mask([(142,160),(151,156),(162,160),(172,162),(181,159),
+                            (189,165),(193,173),(191,182),(183,190),(169,192),(156,185),(149,176)])
+    if state=='idle':
+        left=np.array(Image.fromarray(left).filter(ImageFilter.MaxFilter(5)),dtype=bool)
+        right=np.array(Image.fromarray(right).filter(ImageFilter.MaxFilter(5)),dtype=bool)
+    labels[left&visible]='left_arm';labels[right&visible]='right_arm'
+    hair=(x>=158)&(x<180)&(y>=99)&(y<149)
+    labels[hair&character]='hair_tip'
+    eyes=((80,108,30,29),(131,107,32,30))
+    eye_polygons=([(80,112),(86,108),(98,108),(105,112),(109,120),(107,133),(101,136),(85,135),(80,129)],
+                  [(131,112),(137,107),(150,107),(158,112),(162,121),(160,132),(152,136),(136,135),(131,128)])
+    for eye,points in zip(('left_eye','right_eye'),eye_polygons):
+        labels[polygon_mask(points)]=eye
+    r,g,b=rgb[:,:,0].astype(int),rgb[:,:,1].astype(int),rgb[:,:,2].astype(int)
+    red=(r>g+28)&(r>b+8)&(x>=106)&(x<133)&(y>=132)&(y<155)
+    ry,rx=np.nonzero(red)
+    mouth=(int(rx.min())-1,int(ry.min())-1,int(rx.max()-rx.min())+3,int(ry.max()-ry.min())+3) if len(rx) else (110,138,17,7)
+    mx,my,mw,mh=mouth;labels[my:my+mh,mx:mx+mw]='mouth'
+    waveforms={'listening':((0,103,33,43),(190,103,44,43)),
+               'speaking':((190,144,44,42),),
+               'dictating':((168,151,66,47),)}.get(state,())
+    for wx,wy,ww,wh in waveforms:
+        region=(x>=wx)&(x<wx+ww)&(y>=wy)&(y<wy+wh)&(labels=='decor')
+        labels[region]='waveform'
+    features[state]={'eyes':eyes,'mouth':mouth,'waist':(104,209,27,9),'waveforms':waveforms}
+    lines.append(f'    {state!r}: {{')
+    for part in ('shadow','legs','body','left_arm','right_arm','hair_tip','left_eye','right_eye','mouth','eyes_base','mouth_base','decor','waveform'):
+        part_mask=visible&(labels==part);part_colours=colours;part_alpha=alpha
+        if part in ('eyes_base','mouth_base'):
+            part_mask=np.zeros(visible.shape,dtype=bool);part_colours=colours.copy();part_alpha=np.full(visible.shape,255,dtype=np.uint8)
+            regions=eyes if part=='eyes_base' else (mouth,)
+            for ex,ey,ew,eh in regions:
+                part_mask[ey:ey+eh,ex:ex+ew]=(visible[ey:ey+eh,ex:ex+ew]
+                    & np.isin(labels[ey:ey+eh,ex:ex+ew],('left_eye','right_eye') if part=='eyes_base' else ('mouth',)))
+                for row in range(ey,min(HEIGHT,ey+eh)):
+                    band=rgb[row,75:165].astype(int)
+                    skin=(band[:,0]>200)&(band[:,1]>175)&(band[:,0]>=band[:,1])&(band[:,0]>band[:,2]+4)&(band[:,0]-band[:,1]<38)
+                    tone=np.median(band[skin],axis=0) if np.any(skin) else np.array((255,233,220))
+                    nearest=int(np.argmin(np.sum((np.array(palette[:384]).reshape(-1,3).astype(float)-tone)**2,axis=1)))
+                    part_colours[row,ex:ex+ew]=nearest
+        lines.append(f'        {part!r}: (')
+        for colour in range(128):
+            for coverage in np.unique(part_alpha[part_mask&(part_colours==colour)]):
+                rings=contours(part_mask&(part_colours==colour)&(part_alpha==coverage))
+                if rings:
+                    paint=surface_colour(colour,int(coverage))
+                    lines.append(f'            ({paint}, (')
+                    lines.extend(f'                {ring!r},' for ring in rings)
+                    lines.append('            )),')
+        lines.append('        ),')
+    lines.append('    },')
+lines.append('}')
+lines.append('\nFEATURES = '+repr(features))
+output=ROOT/'src/desktop_app/companion_geometry.py'
+output.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+colours=tuple(render_colours)
+theme=ROOT/'src/desktop_app/themes.py'
+theme.write_text(re.sub(r'COMPANION_REFERENCE_COLOURS = [^\n]*','COMPANION_REFERENCE_COLOURS = '+repr(colours),theme.read_text(encoding='utf-8')),encoding='utf-8')
+print(f'🎨 Eight articulated contour poses written: {output.stat().st_size} bytes')

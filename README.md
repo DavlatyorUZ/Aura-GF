@@ -48,11 +48,12 @@ Your diary and knowledge graph stay on your computer. Speech and chat models run
 
 Double-click the companion, right-click it or use the tray menu to open **Chat**. Text replies are silent.
 
-The compact pixel companion blinks, breathes and reacts to listening and speaking.
+The compact pixel companion has distinct poses for standby, readiness, listening,
+thinking, opening apps, speaking, dictation and transcription. It blinks and breathes.
 It lowers its hand at rest, checks a phone during idle pauses and uses separate
 thinking and application-opening poses.
 Use **Wave** in its right-click menu for a greeting. **Standby** means the
-assistant has not started; it keeps its eyes open while waiting.
+assistant has not started; **Ready** is the open-eyed waiting state.
 
 <details>
 <summary><strong>Hardware and model choices</strong></summary>
