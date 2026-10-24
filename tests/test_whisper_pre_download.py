@@ -100,7 +100,7 @@ def listener_for_loading(monkeypatch):
     monkeypatch.setattr(module, 'MLX_WHISPER_AVAILABLE', False)
     audio = MagicMock()
     _mock_input_devices(audio, [{'name': 'Test microphone', 'max_input_channels': 1}])
-    audio.InputStream.side_effect = RuntimeError('No physical microphone in test')
+    audio.InputStream.side_effect = [MagicMock(), RuntimeError('No physical microphone in test')]
     monkeypatch.setattr(module, 'sd', audio)
     listener = module.VoiceListener(MagicMock(), _create_mock_config(whisper_device='cpu'),
                                     None, MagicMock())

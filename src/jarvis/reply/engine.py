@@ -7,6 +7,7 @@ Handles memory enrichment, tool planning and execution.
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 import json
+import time
 from hashlib import sha256
 from contextlib import closing
 
@@ -14,7 +15,7 @@ from ..tools.types import ToolExecutionResult
 from ..memory.conversation import DialogueMemory, is_tool_message
 
 from ..utils.redact import redact
-from ..system_prompt import build_system_prompt
+from ..system_prompt import build_system_prompt, build_compact_system_prompt
 from ..tools.registry import run_tool_with_retries, generate_tools_description, generate_tools_json_schema, BUILTIN_TOOLS
 from ..tools.builtin.stop import STOP_SIGNAL
 from ..debug import debug_log
@@ -1089,6 +1090,12 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     # A positive single-step ``["Reply to the user."]`` plan is NOT the
     # same as ``[]``: it's the planner deciding no memory or tools are
     # needed. Both cases are preserved for the engine to distinguish.
+    direct_mode = getattr(cfg, "reply_mode", "planned") == "direct"
+    from .application_commands import match_application_command, application_command_reply
+    direct_application = match_application_command(
+        redacted, getattr(cfg, 'application_command_templates', []),
+        (getattr(cfg, 'wake_word', 'jarvis'), *getattr(cfg, 'wake_aliases', [])),
+    ) if direct_mode else None
     _all_builtin_names = list(BUILTIN_TOOLS.keys())
     _all_mcp_names = list(mcp_tools.keys())
     _full_catalog_names = _all_builtin_names + _all_mcp_names
@@ -1137,7 +1144,11 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         dialogue_memory.hot_cache_get(_router_cache_key)
         if dialogue_memory and hasattr(dialogue_memory, "hot_cache_get") else None
     )
-    if isinstance(_cached_routed, list):
+    if direct_mode:
+        routed_tools = [name for name in ('openApplication', 'toolSearchTool', 'stop')
+                        if name in _full_catalog_names]
+        debug_log("Direct reply exposes desktop actions and lazy tool discovery", "planning")
+    elif isinstance(_cached_routed, list):
         routed_tools = list(_cached_routed)
         debug_log("tool router served from hot-window cache", "planning")
     else:
@@ -1202,7 +1213,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     _selected_failed_followup = (
         set(routed_tools) & set(_previous_failed_names) & set(_full_catalog_names)
     ) - {"stop", "toolSearchTool"}
-    if set(routed_tools) == set(_full_catalog_names):
+    if direct_mode or set(routed_tools) == set(_full_catalog_names):
         _selected_failed_followup.clear()
     _carryover_names: list[str] = []
     if recent_messages:
@@ -1255,7 +1266,9 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         and _query_word_count <= 8
         and getattr(cfg, "planner_enabled", True)
     )
-    if _skip_planner:
+    if direct_mode:
+        action_plan = [f'openApplication application={json.dumps(direct_application)}'] if direct_application else []
+    elif _skip_planner:
         # Positive signal: no tools, no memory needed. The warm profile
         # (injected unconditionally below) provides user-context for the
         # chat model; memory enrichment is skipped as if the planner had
@@ -1297,7 +1310,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     # - Plan without it → skip memory work entirely (no keyword LLM,
     #   no diary search, no graph search, no digest LLM).
     plan_demands_memory = bool(action_plan) and plan_requires_memory(action_plan)
-    needs_memory = (not action_plan) or plan_demands_memory
+    needs_memory = not direct_mode and ((not action_plan) or plan_demands_memory)
 
     # Recall gate: if the hot-window already carries a fresh tool result
     # covering the query topic, skip diary/graph enrichment for this turn.
@@ -1676,7 +1689,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     # can't recognise. The markdown-fence format is explicit in the system prompt, so the
     # model has a concrete template to follow. Using text tools from the start also avoids
     # the wasted round-trip and prompt confusion of starting native and falling back mid-turn.
-    use_text_tools = (model_size == ModelSize.SMALL)
+    use_text_tools = (model_size == ModelSize.SMALL) and not direct_mode
     prompts = get_system_prompts(model_size)
     debug_log(f"Model size detected: {model_size.value} for {cfg.llm_chat_model} (use_text_tools={use_text_tools})", "planning")
 
@@ -1705,7 +1718,8 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     action_plan = strip_memory_directives(action_plan)
 
     _assistant_name = str(getattr(cfg, "wake_word", "jarvis") or "jarvis").strip().capitalize()
-    _persona_prompt = build_system_prompt(_assistant_name)
+    _persona_prompt = (build_compact_system_prompt(_assistant_name) if direct_mode
+                       else build_system_prompt(_assistant_name))
     _plan_in_recovery = False
     _plan_recovery_record = ""
     _recovery_guidance = (_PLAN_RECOVERY_HINT
@@ -1715,7 +1729,8 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     def _build_initial_system_message() -> str:
         guidance = [_persona_prompt.strip()]
         # Add model-size-appropriate prompt components
-        guidance.extend(prompts.to_list())
+        if not direct_mode:
+            guidance.extend(prompts.to_list())
 
         guidance.append(
             "Respond in the same language as the user's current request unless they ask for another language."
@@ -2091,7 +2106,15 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     # The latest plausible natural-language candidate. Used by the max-turns
     # digest backstop when the loop exhausts without producing a reply.
     last_candidate_reply: Optional[str] = None
-    max_turns = cfg.agentic_max_turns
+    max_turns = min(3, cfg.agentic_max_turns) if direct_mode else cfg.agentic_max_turns
+    direct_deadline = time.monotonic() + 30.0 if direct_mode else None
+    def reply_timeout():
+        configured = float(getattr(cfg, 'llm_chat_timeout_sec', 45.0))
+        if direct_deadline is not None:
+            return max(0.1, min(configured, direct_deadline-time.monotonic()))
+        return configured
+
+    reply_options = {'num_ctx': 4096, 'max_tokens': 192, 'temperature': 0.1} if direct_mode else None
     turn = 0
     empty_response_retry_used = False
 
@@ -2154,6 +2177,9 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         print("    ⚠️ Planned task needs recovery before continuing.", flush=True)
 
     while turn < max_turns:
+        if direct_deadline is not None and time.monotonic() >= direct_deadline:
+            debug_log("Direct reply reached its 30-second inference deadline", "planning")
+            return None
         if cancel_event is not None and cancel_event.is_set():
             return None
         turn += 1
@@ -2165,7 +2191,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         # reply model within the same bounded conversation loop.
         _plan_tool_steps = tool_steps_of(action_plan)
         if (
-            use_text_tools
+            (use_text_tools or direct_application is not None)
             and _plan_tool_steps
             and not _plan_under_specified
             and not _plan_in_recovery
@@ -2178,7 +2204,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                 _plan_exec_handled = False
                 try:
                     _prior = list(invoked_tools_history)
-                    _resolved = _resolve_plan_step(
+                    _resolved = ('openApplication', {'application': direct_application}) if direct_application is not None else _resolve_plan_step(
                         cfg=cfg,
                         next_step_text=_plan_tool_steps[_tool_results_so_far],
                         original_query=redacted,
@@ -2275,12 +2301,18 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                                 )
                             else:
                                 _plan_hint = ""
+                            if not use_text_tools:
+                                messages.append({
+                                    "role": "assistant", "content": "", "tool_calls": [{
+                                        "id": _plan_call_id, "type": "function",
+                                        "function": {"name": _name, "arguments": _args},
+                                    }],
+                                })
                             messages.append({
-                                "role": "user",
-                                "content": (
-                                    f"[Tool result: {_name}]\n"
-                                    f"{_plan_text}{_plan_hint}"
-                                ),
+                                "role": "user" if use_text_tools else "tool",
+                                "content": (f"[Tool result: {_name}]\n{_plan_text}{_plan_hint}"
+                                            if use_text_tools else _plan_text),
+                                **({} if use_text_tools else {"tool_call_id": _plan_call_id, "name": _name}),
                                 "tool_name": _name,
                                 "tool_failed": not _plan_result.success,
                                 "resource_references": _plan_resources,
@@ -2289,6 +2321,11 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                             invoked_tools_history.append(
                                 (_name, _cand_sig[1], _plan_text)
                             )
+                            if direct_application is not None:
+                                reply = application_command_reply(
+                                    _plan_result, direct_application, cfg.application_command_responses)
+                                debug_log('Configured application command completed without reply inference', 'planning')
+                                break
                             _plan_exec_handled = True
                         else:
                             debug_log(
@@ -2332,8 +2369,8 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
             llm_resp = chat_with_messages(
                 cfg=cfg,
                 messages=messages,
-                timeout_sec=float(getattr(cfg, 'llm_chat_timeout_sec', 45.0)),
-                extra_options=None,
+                timeout_sec=reply_timeout(),
+                extra_options=reply_options,
                 tools=_dump_tools_schema,
                 thinking=getattr(cfg, 'llm_thinking_enabled', False),
             )
@@ -2365,8 +2402,8 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
             llm_resp = chat_with_messages(
                 cfg=cfg,
                 messages=messages,
-                timeout_sec=float(getattr(cfg, 'llm_chat_timeout_sec', 45.0)),
-                extra_options=None,
+                timeout_sec=reply_timeout(),
+                extra_options=reply_options,
                 tools=None,
                 thinking=getattr(cfg, 'llm_thinking_enabled', False),
             )
@@ -2828,7 +2865,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         return None
 
     # Step 9: Handle error case - return error message if no reply
-    if not reply or not reply.strip():
+    if not direct_mode and (not reply or not reply.strip()):
         # Max-turn backstop: the loop exhausted its turns without producing
         # a natural-language reply (e.g. pure tool-call loop). Run a cheap
         # digest pass over the loop activity. Fail-open: on digest failure

@@ -73,6 +73,7 @@
   "low_power_mode": false,
   "echo_energy_threshold": 2.0,
   "echo_tolerance": 0.3,
+  "reply_mode": "planned",
   "llm_thinking_enabled": false,
   "fast_model": "",
   "intent_judge_timeout_sec": 6.0,
@@ -113,5 +114,12 @@
   "dictation_thinking_enabled": false,
   "dictation_custom_dictionary": [],
   "application_aliases": {},
+  "application_command_templates": [],
+  "application_command_responses": {
+    "launch_requested": "A request to open {application} was sent.",
+    "not_installed": "{application} was not found among installed applications.",
+    "ambiguous": "Please use the full installed application name.",
+    "error": "The application could not be opened."
+  },
   "mcps": {}
 }

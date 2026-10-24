@@ -121,6 +121,7 @@ class Settings:
     llm_base_url: str
     llm_api_key: str
     llm_chat_model: str
+    reply_mode: str
     llm_thinking_enabled: bool
     embedding_provider: str  # "" (= same as llm_provider) | "ollama" | "openai_compatible"
     embedding_base_url: str
@@ -294,6 +295,8 @@ class Settings:
     dictation_custom_dictionary: list
 
     application_aliases: Dict[str, str]
+    application_command_templates: list[str]
+    application_command_responses: Dict[str, str]
 
     # MCP Integration
     mcps: Dict[str, Any]
@@ -614,6 +617,7 @@ def get_default_config() -> Dict[str, Any]:
         # Audio Wake Word Detection
         # Intent Judge (LLM-based intent classification)
         # Always used when available, falls back to simple wake word detection
+        "reply_mode": "planned",
         "llm_thinking_enabled": False,  # Enable thinking/reasoning mode for chat (slower but may improve quality)
         # Fast tier: the small, quick model behind real-time work (voice
         # intent, tool routing, quick classifications). Empty = automatic:
@@ -683,6 +687,13 @@ def get_default_config() -> Dict[str, Any]:
 
         # Installed application names and aliases
         "application_aliases": {},
+        "application_command_templates": [],
+        "application_command_responses": {
+            "launch_requested": "A request to open {application} was sent.",
+            "not_installed": "{application} was not found among installed applications.",
+            "ambiguous": "Please use the full installed application name.",
+            "error": "The application could not be opened.",
+        },
 
         # MCP Integration (external servers Jarvis can use). No defaults.
         "mcps": {},
@@ -909,6 +920,7 @@ def load_settings() -> Settings:
         llm_base_url=llm_base_url,
         llm_api_key=llm_api_key,
         llm_chat_model=llm_chat_model,
+        reply_mode=merged["reply_mode"] if merged["reply_mode"] in ("planned", "direct") else "planned",
         llm_thinking_enabled=bool(merged["llm_thinking_enabled"]),
         embedding_provider=embedding_provider,
         embedding_base_url=embedding_base_url,
@@ -1028,6 +1040,12 @@ def load_settings() -> Settings:
         dictation_thinking_enabled=bool(merged["dictation_thinking_enabled"]),
         dictation_custom_dictionary=dictation_custom_dictionary,
 
+        application_command_responses={**defaults['application_command_responses'],
+            **{key:value for key,value in (merged['application_command_responses'].items()
+                if isinstance(merged['application_command_responses'],dict) else [])
+                if key in defaults['application_command_responses'] and isinstance(value,str) and value.strip()}},
+        application_command_templates=[item for item in merged["application_command_templates"] if isinstance(item, str)]
+            if isinstance(merged["application_command_templates"], list) else [],
         application_aliases={str(key): value for key, value in
                              (merged["application_aliases"] if isinstance(merged["application_aliases"], dict) else {}).items()
                              if isinstance(value, str)},

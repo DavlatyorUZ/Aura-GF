@@ -189,3 +189,5 @@ These fields are managed elsewhere or are too complex for a simple form:
 - `vad_frame_ms` / `vad_pre_roll_ms` — low-level VAD timing
 
 Speech settings expose an optional Whisper language code, the local MMS engine and its voice directory. Application aliases are edited in configuration and survive settings saves.
+
+Response Mode offers Planned and Direct conversation, with latency and retrieval differences described in its field help.

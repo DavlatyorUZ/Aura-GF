@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.usefixtures('no_network')]
 
 def listener_with_decoder(monkeypatch, device, decoder, threshold=0.37):
     monkeypatch.setattr('jarvis.listening.listener.create_intent_judge', lambda cfg: None)
-    cfg = SimpleNamespace(sample_rate=16000, vad_enabled=False, hot_window_seconds=3,
+    cfg = SimpleNamespace(whisper_language=None, sample_rate=16000, vad_enabled=False, hot_window_seconds=3,
                           voice_collect_seconds=2, voice_max_collect_seconds=60,
                           tune_enabled=False, whisper_min_confidence=0.3,
                           whisper_no_speech_threshold=threshold)

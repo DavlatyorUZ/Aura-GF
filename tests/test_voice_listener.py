@@ -44,6 +44,7 @@ def _create_mock_config(**kwargs):
     mock_cfg.ollama_chat_model = mock_cfg.llm_chat_model
     mock_cfg.fast_model = kwargs.get("fast_model", "")
     mock_cfg.embedding_model = kwargs.get("embedding_model", None)
+    mock_cfg.whisper_language = kwargs.get("whisper_language", None)
     mock_cfg.whisper_model = kwargs.get("whisper_model", "small")
     mock_cfg.whisper_device = kwargs.get("whisper_device", "auto")
     mock_cfg.whisper_compute_type = kwargs.get("whisper_compute_type", "int8")

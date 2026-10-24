@@ -26,7 +26,7 @@ class SpeakingTTS:
 
 
 def process(text, spoken, commands):
-    cfg=SimpleNamespace(sample_rate=16000,vad_enabled=False,echo_tolerance=0.3,
+    cfg=SimpleNamespace(wake_word=get_default_config()['wake_word'],wake_aliases=[],sample_rate=16000,vad_enabled=False,echo_tolerance=0.3,
                         echo_energy_threshold=2,hot_window_seconds=3,tune_enabled=False,
                         whisper_model='small',stop_commands=commands,tts_rate=200,
                         stop_command_fuzzy_ratio=get_default_config()['stop_command_fuzzy_ratio'],

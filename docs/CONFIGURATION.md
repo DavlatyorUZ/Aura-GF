@@ -438,3 +438,35 @@ Ask Jarvis to open an installed application, for example “Telegram ilovasini o
 ```
 
 The alias target must match an installed application's name. Understanding the request depends on the chosen local model; the launcher reports missing applications instead of executing arbitrary commands.
+
+## Faster conversation
+
+Select **Direct conversation** as Response Mode for shorter preparation on local
+models. It keeps recent conversation and saved user profiles, and lets the chat
+model call tools directly. Planned mode also retrieves query-specific long-term
+memories and decomposes multi-step requests. Direct mode bounds inference to
+30 seconds and short replies; model accuracy still depends on its language and
+tool-calling capabilities. Keep Chat Thinking Mode off when speed matters.
+
+For immediate application dispatch, define complete command phrases in any language:
+
+```json
+{
+  "reply_mode": "direct",
+  "application_command_templates": [
+    "{application} ilovasini och",
+    "{application}ni och",
+    "open {application}"
+  ]
+}
+```
+
+Matching phrases dispatch the installed-application tool before AI inference.
+Configured result acknowledgements describe the actual outcome without AI inference. Unconfigured wording uses normal model
+understanding. The launcher still validates the application against the local OS
+catalogue; templates cannot execute shell commands.
+
+`application_command_responses` customises `launch_requested`, `not_installed`,
+`ambiguous` and `error` messages in your language. `{application}` is replaced by
+the application's name. A successful launch means a request was dispatched to
+Windows, rather than confirmation of a visible window.

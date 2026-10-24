@@ -114,7 +114,7 @@ The activity timeline keeps ordinary events readable. Downloads have a separate 
 
 ### Your setup, without the JSON
 
-Choose models, tune speech recognition, configure tools and enable Low Power Mode from **Settings** in the tray menu.
+Choose models, tune speech recognition, configure tools and enable Low Power Mode from **Settings** in the tray menu. Direct conversation mode reduces preparation latency while Planned mode includes query-specific long-term retrieval.
 
 <p align="center">
   <img src="docs/img/settings-window.png" alt="Jarvis Settings with a category sidebar and speech recognition controls" width="900">
@@ -132,7 +132,7 @@ Open Chat for silent replies in the same conversation. **Pause Voice Listening**
 
 Jarvis is developed primarily on macOS. Windows and Linux behaviour may differ. See the [evaluation results](EVALS.md) for tested capabilities.
 
-- **Accuracy and speed depend on your models and hardware.** Smaller models can miss parts of complex requests, and slow speech recognition can drop utterances.
+- **Accuracy and speed depend on your models and hardware.** Very small models can fail simple Uzbek questions, and slow speech recognition can drop utterances. Configured application commands dispatch without model inference.
 - **Dictation is unavailable on macOS 26+** ([#172](https://github.com/isair/jarvis/issues/172)). Linux dictation requires X11, with limited Wayland support.
 - **Spoken “stop” can be mistaken for echo** while Jarvis is speaking ([#24](https://github.com/isair/jarvis/issues/24)).
 - **No mobile app** is available ([#17](https://github.com/isair/jarvis/issues/17)).

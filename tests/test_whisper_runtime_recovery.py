@@ -12,7 +12,7 @@ pytestmark = pytest.mark.unit
 
 def listener_with_model(monkeypatch, device, transcribe):
     monkeypatch.setattr('jarvis.listening.listener.MLX_WHISPER_AVAILABLE', False)
-    cfg = SimpleNamespace(sample_rate=16000, vad_enabled=False, echo_tolerance=0.3,
+    cfg = SimpleNamespace(whisper_language=None, sample_rate=16000, vad_enabled=False, echo_tolerance=0.3,
                           echo_energy_threshold=2.0, hot_window_seconds=3.0,
                           tune_enabled=False, whisper_model='small',
                           whisper_compute_type='float16', whisper_min_confidence=0.3,
@@ -117,7 +117,7 @@ def test_startup_warmup_recovers_cuda_before_listening(monkeypatch):
     monkeypatch.setattr(listener, '_start_llm_warmup', lambda: [])
     sd = MagicMock()
     sd.query_devices.return_value = [{'name': 'Test Mic', 'max_input_channels': 1}]
-    sd.InputStream.side_effect = RuntimeError('No physical microphone in test')
+    sd.InputStream.side_effect = [MagicMock(), RuntimeError('No physical microphone in test')]
     monkeypatch.setattr('jarvis.listening.listener.sd', sd)
     listener.run()
     assert listener._transcribe_audio(np.zeros(16000)) == ('hello Jarvis', 'en', ())

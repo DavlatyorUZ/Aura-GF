@@ -603,3 +603,13 @@ voice recognition. Empty means automatic detection; `uz` selects Uzbek. The
 configured language applies during decoding and warmup without removing VAD,
 confidence checks or cancellation guards. Recognised language continues into the
 reply context. A voice model's synthesis alphabet does not change recognition.
+
+### Spoken-name echo
+
+Before wake activation, a transcript containing only a configured assistant name
+is rejected when that same name occurs in the tracked spoken text, its capture
+overlaps that playback or the echo-tolerance tail, and its energy remains below
+the configured echo-spike threshold. The capture must belong to the same TTS
+context. Fresh calls, louder interruptions and names followed by a new request
+retain the normal wake and intent path. Matching normalises Unicode and punctuation
+without language-specific word lists.

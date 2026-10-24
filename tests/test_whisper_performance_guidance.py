@@ -36,7 +36,7 @@ def run_speech(monkeypatch, durations, model='medium', audio_seconds=2, transcri
     if background_wait:
         def sample():
             before = time.monotonic()
-            Event().wait(0.001)
+            Event().wait(max(0.001, time.get_clock_info("monotonic").resolution*2))
             return before, time.monotonic()
         with ThreadPoolExecutor(max_workers=1) as pool:
             before, after = pool.submit(sample).result(timeout=5)

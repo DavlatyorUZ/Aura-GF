@@ -56,6 +56,24 @@ class EchoDetector:
         self._utterance_start_time: float = 0.0
         self._utterance_end_time: float = 0.0
     
+    def is_spoken_name_echo(self, heard_text, assistant_names, start, end, energy):
+        """Reject a quiet, captured name fragment only while its spoken source overlaps."""
+        if start <= 0 or end < start or self._tts_start_time <= 0:
+            return False
+        finish = self._last_tts_finish_time or float('inf')
+        if end < self._tts_start_time or start > finish + self.echo_tolerance:
+            return False
+        if energy >= self._tts_energy_baseline * self.energy_spike_threshold:
+            return False
+        heard = tuple(filter(None, (_normalise_echo_token(word) for word in heard_text.split())))
+        spoken = tuple(filter(None, (_normalise_echo_token(word) for word in self._last_tts_text.split())))
+        for name in assistant_names:
+            tokens = tuple(filter(None, (_normalise_echo_token(word) for word in name.split())))
+            if tokens and heard == tokens and any(
+                    spoken[index:index+len(tokens)] == tokens for index in range(len(spoken))):
+                return True
+        return False
+
     def track_tts_start(self, tts_text: str, baseline_energy: float = 0.0045,
                         exact_duration: Optional[float] = None) -> None:
         """

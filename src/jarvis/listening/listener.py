@@ -681,6 +681,12 @@ class VoiceListener(threading.Thread):
             and same_tts_context
         )
 
+        if same_tts_context and self.echo_detector.is_spoken_name_echo(
+                accepted_text, (self.cfg.wake_word, *self.cfg.wake_aliases),
+                utterance_start_time, utterance_end_time, utterance_energy):
+            debug_log('Spoken assistant-name echo rejected before wake activation', 'echo')
+            return
+
         # --- Early echo check + early beep ---
         # Check for echo BEFORE starting beep and BEFORE intent judge.
         # This prevents: false beeps on echo, intent judge blocking the audio

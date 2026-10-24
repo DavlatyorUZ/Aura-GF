@@ -479,3 +479,18 @@ Voice and text chat do not supply a task cancellation event.
 Replies follow the language of the current user request unless the user requests
 another language. This applies to both text and voice, independently of the TTS
 backend. Installing a voice does not force the conversation into its language.
+
+## Direct conversation mode
+
+`reply_mode=direct` exposes application opening, stop and lazy tool discovery without
+router, planner, memory-extractor or memory-digest inference. It retains recent
+dialogue, saved user/directive profiles, redaction, tool execution boundaries and
+conversation persistence. Planned mode includes query-specific long-term retrieval.
+Direct mode uses the compact unified persona and native tool calling, with the
+existing text protocol fallback when the server rejects native tools. Its context
+is 4096 tokens and each inference generates at most 192 tokens at temperature 0.1.
+At most three loop turns share a 30-second inference deadline, bounded further by
+the configured chat timeout. The deadline is checked between tool actions; an
+in-flight tool keeps its own timeout. Exhaustion does not start a digest inference.
+
+Complete user-configured application command templates supply a concrete application-opening step in direct mode. This step executes through the same tool runner and renders a configured acknowledgement from its actual raw result without model inference. Common conversation recording retains the result. Other wording remains a model request.

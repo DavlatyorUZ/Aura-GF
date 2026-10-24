@@ -38,6 +38,20 @@ control is evaluation-only; raw-context data flow matches the reply path.
 
 ## 1. Main Reply Loop (agentic messages loop)
 
+With `reply_mode=direct`, router, planner, query-specific memory extraction and
+memory digestion are gated off. Saved user/directive profiles and recent dialogue
+still enter the reply. The compact prompt in `system_prompt.py` supplies persona
+and execution guidance. Native tool calls expose application opening, stop and toolSearchTool; other tools
+are discovered on demand through the existing router escape hatch. A server
+rejection retains the existing text protocol fallback. Direct calls use 4096
+context tokens, a 192-token generation cap, temperature 0.1 and the configured
+CHAT tier. Three turns share a 30-second inference deadline, bounded by the chat
+timeout; tools retain their own deadlines. Turn exhaustion starts no digest call.
+A complete configured application command dispatches its ordinary local tool
+and renders its configured result acknowledgement without reply inference. The
+raw result and delivered reply enter ordinary conversation recording. No intent,
+step resolver, reply or digest model is called for that match. Planned mode keeps the preparation and model-size guidance described below.
+
 Reply guidance follows the current user's language unless a different language
 is requested. The selected speech backend does not force English. The validated
 current speech language code accompanies this guidance when recognition supplies it.
