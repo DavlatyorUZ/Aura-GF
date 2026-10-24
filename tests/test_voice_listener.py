@@ -1864,6 +1864,7 @@ class TestWhisperNoSpeechBackendContract:
 
         monkeypatch.setattr(capture, "create_intent_judge", lambda cfg: None)
         cfg = SimpleNamespace(vad_enabled=False, voice_debug=False,
+                              whisper_language=None,
                               whisper_min_confidence=.3,
                               whisper_no_speech_threshold=threshold)
         obj = capture.VoiceListener(None, cfg, None, None)

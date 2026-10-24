@@ -595,3 +595,11 @@ A control captured before that request cannot cancel it after delayed recognitio
 The matching preparation request handle owns interruption, preserving queued
 replacements when synthesis finishes during control recognition. The control
 remains valid when that same utterance starts playback before recognition ends.
+
+### Recognition language
+
+`whisper_language` is an optional language code shared by faster-whisper and MLX
+voice recognition. Empty means automatic detection; `uz` selects Uzbek. The
+configured language applies during decoding and warmup without removing VAD,
+confidence checks or cancellation guards. Recognised language continues into the
+reply context. A voice model's synthesis alphabet does not change recognition.

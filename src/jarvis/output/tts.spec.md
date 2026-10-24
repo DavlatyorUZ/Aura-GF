@@ -101,3 +101,19 @@ initial model load, even when no worker exists yet. Finishing that preparation
 cannot start a cancelled request or enqueue it onto a newer worker. A fresh
 submission after stopping can use the prepared model. Model preparation itself
 is not forcibly terminated.
+
+## Local MMS / VITS voices
+
+`tts_engine: mms` selects a downloaded VITS model directory from `tts_voice`.
+The optional dependencies are in `requirements-mms.txt`. The runtime accepts
+local directories only and loads safetensors with `local_files_only=True` and
+`trust_remote_code=False`; missing files never trigger a network download.
+`scripts/install_uzbek_voice.py` is an explicit model download utility.
+
+Piper and MMS share PCM playback, request cancellation, exact duration and
+activity ownership through `LocalNeuralTTS`. MMS synthesises bounded sentence
+chunks on the CPU and checks interruption between them. Uzbek Cyrillic voices
+accept Cyrillic directly and transliterate Latin input, including Uzbek apostrophe
+variants, according to their tokenizer language. This is voice-alphabet handling,
+not natural-language intent matching. Voice quality and language support depend
+on the selected checkpoint; a single-language voice is not a multilingual voice.

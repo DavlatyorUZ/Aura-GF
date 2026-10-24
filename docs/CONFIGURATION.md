@@ -218,6 +218,10 @@ To use different Piper voices, download from [HuggingFace](https://huggingface.c
 }
 ```
 
+**Local Uzbek MMS voice** (source installations): install `requirements-mms.txt`, then run `python scripts/install_uzbek_voice.py --voice female`. The installer downloads model files only. Set `tts_engine` to `mms` and `tts_voice` to the downloaded directory shown by the installer. Synthesis uses local safetensors weights and does not send text or audio to a server. Uzbek Latin and Cyrillic text are accepted. The voice derives from Meta MMS; review the model and base-model licences before commercial use.
+
+Set `whisper_language` to `uz` for Uzbek recognition, or leave it `null` for automatic language detection. Use a multilingual Whisper model, without the `.en` suffix. Small recognition and chat models can make mistakes in Uzbek.
+
 **Chatterbox** - AI voice with emotion control (requires running from source):
 ```json
 { "tts_engine": "chatterbox" }
@@ -424,3 +428,13 @@ Get API key at [composio.dev](https://composio.dev)
 **Jarvis keeps deflecting on questions it answered before** - small models can record their own past failures into the diary, which then primes future sessions to repeat them. New writes are scrubbed automatically; to clean historical entries, open the Memory Viewer, switch to the Diary tab, and click **Clean up deflection narration** in the sidebar Maintenance section. Only sentences that narrate the assistant's failures are removed; the rest of each entry stays.
 
 </details>
+
+## Windows application names
+
+Ask Jarvis to open an installed application, for example “Telegram ilovasini och”. The local Start catalogue supplies launch targets. Ambiguous names require a more specific name. To use a preferred name for an installed client, add an alias in configuration:
+
+```json
+{ "application_aliases": { "Telegram": "AyuGram" } }
+```
+
+The alias target must match an installed application's name. Understanding the request depends on the chosen local model; the launcher reports missing applications instead of executing arbitrary commands.

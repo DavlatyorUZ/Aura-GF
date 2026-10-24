@@ -15,3 +15,5 @@ Saved opaque keys and literal values survive the existing migration and desktop-
 Every declared default is represented in typed runtime Settings. Saved values take precedence independently, including `llm_thinking_enabled`, `intent_judge_thinking_enabled` and `dictation_thinking_enabled`. These switches default to disabled and apply to their respective LLM contexts.
 
 `stop_commands` supplies the listener's text interruption phrases. An empty list disables text interruption phrases; intent judgement retains its stop decisions. `stop_command_fuzzy_ratio` supplies the same threshold to short-control matching and standalone-control priority during TTS echo handling. List normalisation follows the shared configuration list parser.
+
+`whisper_language` is an optional recognition language code; `null` enables detection. `application_aliases` maps user-selected application names to installed Windows names. Non-string alias targets are ignored. `tts_engine` accepts `piper`, `chatterbox` and `mms`; MMS uses `tts_voice` as its local model directory.

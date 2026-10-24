@@ -1939,7 +1939,7 @@ class VoiceListener(threading.Thread):
                         _ = mlx_whisper.transcribe(
                             warmup_audio,
                             path_or_hf_repo=self._mlx_model_repo,
-                            language=None,
+                            language=self.cfg.whisper_language,
                         )
                         debug_log(f"MLX Whisper model pre-loaded: repo={self._mlx_model_repo}", "voice")
 
@@ -2580,7 +2580,7 @@ class VoiceListener(threading.Thread):
         """Consume lazy segments before releasing the shared model lock."""
         cpu_mode = self._whisper_device == "cpu"
         segments, info = self.model.transcribe(
-            audio, language=None, vad_filter=True,
+            audio, language=self.cfg.whisper_language, vad_filter=True,
             no_speech_threshold=self.cfg.whisper_no_speech_threshold,
             condition_on_previous_text=False,
             without_timestamps=cpu_mode,
@@ -2601,7 +2601,7 @@ class VoiceListener(threading.Thread):
                     result = mlx_whisper.transcribe(
                         audio,
                         path_or_hf_repo=self._mlx_model_repo,
-                        language=None,
+                        language=self.cfg.whisper_language,
                     )
 
                 # Capture Whisper's auto-detected language (ISO-639-1) so

@@ -187,3 +187,5 @@ These fields are managed elsewhere or are too complex for a simple form:
 - `voice_debug` — environment variable only
 - `whisper_min_audio_duration` — rarely changed advanced params
 - `vad_frame_ms` / `vad_pre_roll_ms` — low-level VAD timing
+
+Speech settings expose an optional Whisper language code, the local MMS engine and its voice directory. Application aliases are edited in configuration and survive settings saves.

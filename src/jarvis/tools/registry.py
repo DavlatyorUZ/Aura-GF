@@ -10,6 +10,7 @@ if sys.version_info < (3, 11):
 from .builtin.screenshot import ScreenshotTool
 from .builtin.web_search import WebSearchTool
 from .builtin.local_files import LocalFilesTool
+from .builtin.applications import OpenApplicationTool
 from .builtin.fetch_web_page import FetchWebPageTool
 from .builtin.nutrition.log_meal import LogMealTool
 from .builtin.nutrition.fetch_meals import FetchMealsTool
@@ -30,6 +31,7 @@ BUILTIN_TOOLS = {
     "screenshot": ScreenshotTool(),
     "webSearch": WebSearchTool(),
     "localFiles": LocalFilesTool(),
+    "openApplication": OpenApplicationTool(),
     "fetchWebPage": FetchWebPageTool(),
     "logMeal": LogMealTool(),
     "fetchMeals": FetchMealsTool(),

@@ -181,7 +181,8 @@ def _build_field_metadata() -> List[FieldMeta]:
     f("tts_enabled", "Enable TTS", "Enable text-to-speech output",
       "tts", "bool")
     f("tts_engine", "TTS Engine", "Speech synthesis engine",
-      "tts", "choice", choices=[("piper", "Piper (Neural)"), ("chatterbox", "Chatterbox (Voice Cloning)")])
+      "tts", "choice", choices=[("piper", "Piper (Neural)"), ("chatterbox", "Chatterbox (Voice Cloning)"), ("mms", "MMS / VITS (Local Voice)")])
+    f("tts_voice", "TTS Voice", "Downloaded local model directory for MMS / VITS", "tts", "str", nullable=True)
     f("tts_rate", "Speech Rate", "Words per minute (200 = normal)",
       "tts", "int", min_val=80, max_val=400, step=10, suffix="WPM", nullable=True)
 
@@ -240,6 +241,8 @@ def _build_field_metadata() -> List[FieldMeta]:
       "How loosely to match the wake word (0.0–1.0)",
       "wake", "float", min_val=0.5, max_val=1.0, step=0.01)
     # --- Whisper ---
+    f("whisper_language", "Recognition Language", "Language code such as uz. Leave empty for automatic detection.",
+      "whisper", "str", nullable=True)
     f("whisper_model", "Model Size",
       "Whisper model size or local model reference",
       "whisper", "choice",

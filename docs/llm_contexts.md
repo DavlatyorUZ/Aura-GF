@@ -38,6 +38,10 @@ control is evaluation-only; raw-context data flow matches the reply path.
 
 ## 1. Main Reply Loop (agentic messages loop)
 
+Reply guidance follows the current user's language unless a different language
+is requested. The selected speech backend does not force English. The validated
+current speech language code accompanies this guidance when recognition supplies it.
+
 Task requests can supply a cooperative cancellation event. Entry and loop checks
 skip further work; checks after plan-step resolution and model responses prevent
 new tool actions, and a native-protocol failure cannot start fallback inference

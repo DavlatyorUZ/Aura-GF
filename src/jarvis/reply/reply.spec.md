@@ -473,3 +473,9 @@ fallback and before output or dialogue writes. A cancelled request returns no
 reply and starts no subsequent tool action. In-flight inference and tool calls
 finish under their existing deadlines; cancellation cannot undo completed actions.
 Voice and text chat do not supply a task cancellation event.
+
+## Reply language
+
+Replies follow the language of the current user request unless the user requests
+another language. This applies to both text and voice, independently of the TTS
+backend. Installing a voice does not force the conversation into its language.

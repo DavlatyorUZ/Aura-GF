@@ -53,6 +53,7 @@
   ],
   "wake_fuzzy_ratio": 0.78,
   "whisper_model": "medium",
+  "whisper_language": null,
   "whisper_backend": "auto",
   "whisper_device": "auto",
   "whisper_compute_type": "int8",
@@ -107,9 +108,10 @@
   "brave_search_api_key": "",
   "wikipedia_fallback_enabled": true,
   "dictation_enabled": true,
-  "dictation_hotkey": "ctrl+alt",
+  "dictation_hotkey": "ctrl+cmd",
   "dictation_filler_removal": false,
   "dictation_thinking_enabled": false,
   "dictation_custom_dictionary": [],
+  "application_aliases": {},
   "mcps": {}
 }

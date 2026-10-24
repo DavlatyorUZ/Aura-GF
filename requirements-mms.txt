@@ -1,0 +1,5 @@
+# Optional CPU speech dependencies for local VITS/MMS voices.
+# Install torch from https://download.pytorch.org/whl/cpu for CPU-only deployments.
+torch>=2.6
+transformers>=4.44,<5
+safetensors>=0.4

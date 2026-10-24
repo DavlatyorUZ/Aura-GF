@@ -277,7 +277,8 @@ def test_different_voice_snapshots_preserve_static_guidance_prefix(mock_config, 
     assert prefixes[0] == prefixes[1]
     for guidance in prompt_engine.get_system_prompts(prompt_engine.detect_model_size(mock_config.llm_chat_model)).to_list():
         assert guidance in prefixes[0]
-    assert 'Always respond in English' in prefixes[0]
+    assert 'same language' in prefixes[0]
+    assert 'Always respond in English' not in prefixes[0]
 
 
 def test_salvaged_speech_is_dispatched_and_recorded_without_echo(mock_config, db, dialogue_memory):

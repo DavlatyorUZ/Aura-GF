@@ -148,7 +148,7 @@ class Settings:
 
     # Text-to-Speech
     tts_enabled: bool
-    tts_engine: str  # "piper" (default) or "chatterbox"
+    tts_engine: str  # piper, chatterbox or mms
     tts_voice: str | None
     tts_rate: int | None  # Words per minute (WPM), 200=normal
     tts_chatterbox_device: str  # "cuda", "auto", or "cpu" for Chatterbox
@@ -182,6 +182,7 @@ class Settings:
 
     # Whisper Speech Recognition
     whisper_model: str
+    whisper_language: str | None
     whisper_backend: str  # "auto", "mlx", or "faster-whisper"
     whisper_device: str  # "cuda", "auto", or "cpu" (only for faster-whisper)
     whisper_compute_type: str
@@ -291,6 +292,8 @@ class Settings:
     dictation_filler_removal: bool
     dictation_thinking_enabled: bool
     dictation_custom_dictionary: list
+
+    application_aliases: Dict[str, str]
 
     # MCP Integration
     mcps: Dict[str, Any]
@@ -583,6 +586,7 @@ def get_default_config() -> Dict[str, Any]:
 
         # Whisper Speech Recognition
         "whisper_model": "medium",
+        "whisper_language": None,
         "whisper_backend": "auto",  # "auto" (MLX on Apple Silicon, else faster-whisper), "mlx", or "faster-whisper"
         "whisper_device": "auto",  # "cuda" (recommended if available), "auto", or "cpu" (only for faster-whisper)
         "whisper_compute_type": "int8",
@@ -677,6 +681,9 @@ def get_default_config() -> Dict[str, Any]:
         "dictation_thinking_enabled": False,  # Enable thinking for dictation filler removal (adds latency)
         "dictation_custom_dictionary": [],
 
+        # Installed application names and aliases
+        "application_aliases": {},
+
         # MCP Integration (external servers Jarvis can use). No defaults.
         "mcps": {},
     }
@@ -758,7 +765,7 @@ def load_settings() -> Settings:
     use_stdin = bool(merged.get("use_stdin", False))
     tts_enabled = bool(merged.get("tts_enabled", True))
     tts_engine = str(merged.get("tts_engine", "piper")).lower()
-    if tts_engine not in ("piper", "chatterbox"):
+    if tts_engine not in ("piper", "chatterbox", "mms"):
         tts_engine = "piper"  # Default to piper if invalid value
     tts_voice_val = merged.get("tts_voice")
     tts_voice = None if tts_voice_val in (None, "", "null") else str(tts_voice_val)
@@ -955,6 +962,8 @@ def load_settings() -> Settings:
 
         # Whisper Speech Recognition
         whisper_model=whisper_model,
+        whisper_language=(str(merged["whisper_language"]).strip().lower() or None
+                          if merged["whisper_language"] is not None else None),
         whisper_backend=whisper_backend,
         whisper_device=whisper_device,
         whisper_compute_type=whisper_compute_type,
@@ -1018,6 +1027,10 @@ def load_settings() -> Settings:
         dictation_filler_removal=dictation_filler_removal,
         dictation_thinking_enabled=bool(merged["dictation_thinking_enabled"]),
         dictation_custom_dictionary=dictation_custom_dictionary,
+
+        application_aliases={str(key): value for key, value in
+                             (merged["application_aliases"] if isinstance(merged["application_aliases"], dict) else {}).items()
+                             if isinstance(value, str)},
 
         # MCP Integration
         mcps=mcps,
