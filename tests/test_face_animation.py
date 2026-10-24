@@ -189,3 +189,13 @@ def test_rendered_states_match_the_reviewed_light_and_dark_appearance(scene, sta
     difference = np.abs(on_desktop(actual) - on_desktop(expected))
     assert difference.mean() < 0.5
     assert np.mean(np.max(difference, axis=2) > 20) < 0.005
+
+
+def test_idle_phone_and_thinking_postures_follow_real_activity(scene):
+    window, manager, clock=scene
+    advance(scene, JarvisState.IDLE, 10)
+    assert window.face._pose.activity == 'phone'
+    window.face.wave()
+    advance(scene, JarvisState.THINKING, .2)
+    assert window.face._pose.activity == 'thinking'
+    assert window.face._pose.wave == 0

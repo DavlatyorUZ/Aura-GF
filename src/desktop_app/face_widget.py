@@ -35,6 +35,7 @@ _STATUS = {
     JarvisState.IDLE: ('Ready', 'success_light'),
     JarvisState.LISTENING: ('Listening', 'accent_secondary'),
     JarvisState.THINKING: ('Thinking', 'accent_primary'),
+    JarvisState.LAUNCHING: ('Opening app', 'accent_secondary'),
     JarvisState.SPEAKING: ('Speaking', 'success_light'),
     JarvisState.DICTATING: ('Recording', 'error_light'),
     JarvisState.DICTATION_PROCESSING: ('Transcribing', 'warning_light'),
@@ -45,8 +46,8 @@ class FaceWidget(QWidget):
     """A bounded animation with separate blink, speech and activity cues."""
 
     state_observed = pyqtSignal(str)
-    DESIGN_WIDTH = 240
-    DESIGN_HEIGHT = 380
+    DESIGN_WIDTH = 180
+    DESIGN_HEIGHT = 280
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -104,6 +105,8 @@ class FaceWidget(QWidget):
             if self._jarvis_state == JarvisState.ASLEEP and state == JarvisState.IDLE:
                 self._wave_started_at = now
                 debug_log('Companion greeting on voice readiness', 'face')
+            if state in (JarvisState.THINKING, JarvisState.LAUNCHING, JarvisState.LISTENING):
+                self._wave_started_at = None
             self._jarvis_state = state
             self._refresh_accessibility()
             self.state_observed.emit(state.value)
@@ -145,7 +148,11 @@ class FaceWidget(QWidget):
                 effective_expression = Expression.HAPPY.value
             elif state in (JarvisState.LISTENING, JarvisState.DICTATING):
                 effective_expression = Expression.CURIOUS.value
+        activity = ('launching' if state == JarvisState.LAUNCHING else
+                    'thinking' if thinking else
+                    'phone' if state == JarvisState.IDLE and self._elapsed % 24 > 8 else 'rest')
         self._pose = CompanionPose(
+            activity=activity, phase=(self._elapsed % 2.0)/2.0,
             breath=round((1 + math.sin(self._elapsed * 1.8)) / 2) if awake else 0,
             blink=self._blink_factor, mouth=self._mouth_open, wave=wave,
             hair=round(math.sin(self._elapsed * 1.4)) if awake else 0,
@@ -177,9 +184,11 @@ class FaceWidget(QWidget):
         painter = QPainter(image)
         # Sample the extremities of articulated poses to reserve a stable hit region.
         target = self._character_rect()
-        for wave in (0, 0.1, 0.3, 0.5, 0.7, 0.9):
-            for hair in (-1, 1):
-                painter.drawImage(target, render_companion(CompanionPose(wave=wave, hair=hair, thinking=True)))
+        for activity in ('rest', 'thinking', 'phone', 'launching'):
+            for wave in (0, 0.1, 0.3, 0.5, 0.7, 0.9):
+                for hair in (-1, 1):
+                    painter.drawImage(target, render_companion(CompanionPose(
+                        wave=wave, hair=hair, activity=activity, thinking=activity=='thinking', phase=wave)))
         painter.end()
         region = QRegion(QPixmap.fromImage(image).mask())
         padded = QRegion(region)

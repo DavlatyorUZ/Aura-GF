@@ -43,3 +43,5 @@ ownership. This preserves dictation and newer work when speech or query cleanup
 finishes. The manager's lock serialises local ownership; independent processes
 retain best-effort ordering rather than a cross-process compare-and-swap contract.
 No lock files, worker threads or persistent ownership records are created.
+
+`LAUNCHING` identifies an installed application launch in progress. Its owning tool restores the preceding activity only while it retains publication ownership. Speech and dictation retain priority.

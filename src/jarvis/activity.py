@@ -14,6 +14,7 @@ class JarvisState(Enum):
     IDLE = "idle"              # Awake and ready, waiting for wake word
     LISTENING = "listening"    # Actively listening (collecting or hot window)
     THINKING = "thinking"      # Processing query
+    LAUNCHING = "launching"    # Dispatching an installed application
     SPEAKING = "speaking"      # Speaking response
     DICTATING = "dictating"    # Hold-to-dictate recording active
     DICTATION_PROCESSING = "dictation_processing"  # Transcribing & pasting captured dictation

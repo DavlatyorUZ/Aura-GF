@@ -7,6 +7,7 @@ import unicodedata
 from ..base import Tool
 from ..types import ToolExecutionResult
 from ...debug import debug_log
+from ...activity import JarvisState, get_jarvis_state
 
 
 def _installed_apps():
@@ -53,6 +54,9 @@ class OpenApplicationTool(Tool):
         name = (args or {}).get('application', '')
         if not isinstance(name, str) or len(name) > 160:
             return ToolExecutionResult(success=False, reply_text='Supply a short application name.')
+        state = get_jarvis_state()
+        owner = state.acquire_state(JarvisState.LAUNCHING, protected_states={
+            JarvisState.SPEAKING, JarvisState.DICTATING, JarvisState.DICTATION_PROCESSING})
         try:
             apps = _installed_apps()
             query = _normalise(name)
@@ -81,3 +85,6 @@ class OpenApplicationTool(Tool):
         except (OSError, subprocess.SubprocessError, ValueError) as exc:
             debug_log(f'Application launch failed: {type(exc).__name__}', 'tools')
             return ToolExecutionResult(success=False, reply_text='The operating system could not launch the application.')
+
+        finally:
+            state.release_state(owner)

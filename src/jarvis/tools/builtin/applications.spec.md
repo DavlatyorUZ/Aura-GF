@@ -15,3 +15,5 @@ Tools return raw result data; the reply engine handles the user's language.
 `application_aliases` maps user-chosen names to installed display names before
 selection. Aliases remain names, never executable paths or arguments. They can
 map a familiar product name to a locally installed compatible client.
+
+Catalogue discovery and launch dispatch own temporary `LAUNCHING` activity, except during protected speech or dictation. Completion and failure release that ownership without overwriting newer work.

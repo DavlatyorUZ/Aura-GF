@@ -8,9 +8,9 @@ from desktop_app.companion_painter import CompanionPose, render_companion
 pytestmark = pytest.mark.unit
 
 
-def test_resting_geometry_preserves_the_supplied_character():
+def test_greeting_geometry_preserves_the_supplied_character():
     source = Image.open(Path(__file__).parent / 'fixtures/face/reference.png').convert('RGB').crop((94, 44, 406, 476))
-    frame = render_companion(CompanionPose())
+    frame = render_companion(CompanionPose(wave=0.001, mouth=0.6))
     frame = frame.convertToFormat(frame.Format.Format_RGBA8888)
     actual = Image.frombytes('RGBA', (frame.width(), frame.height()), frame.constBits().asstring(frame.sizeInBytes()))
     actual = actual.resize(source.size, Image.Resampling.NEAREST)

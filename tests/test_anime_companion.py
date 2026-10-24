@@ -22,10 +22,10 @@ def test_facial_motion_stays_within_its_end_poses(feature):
             CompanionPose(**{feature: endpoint}))
 
 
-def test_resting_character_has_a_visible_raised_greeting_hand():
+def test_greeting_character_has_a_visible_raised_hand():
     from desktop_app.companion_painter import CompanionPose, render_companion
 
-    image = render_companion(CompanionPose()).scaled(104, 144)
+    image = render_companion(CompanionPose(wave=0.001)).scaled(104, 144)
     # The hand is visible in front of the lower left hood, beside the cheek.
     assert sum(image.pixelColor(x, y).red() > image.pixelColor(x, y).blue() + 15
                for y in range(78, 91) for x in range(23, 36)) > 25

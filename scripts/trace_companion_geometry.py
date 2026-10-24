@@ -42,8 +42,9 @@ def part(name, points):
     ImageDraw.Draw(mask).polygon(points, fill=1)
     labels[np.array(mask).astype(bool)] = name
 
-part('arm', [(161,279),(185,276),(201,286),(200,302),(217,309),(219,329),
-             (208,345),(193,356),(179,356),(165,347),(154,328),(154,311),(165,304),(158,296)])
+part('arm', [(158,275),(187,272),(205,282),(205,301),(224,307),(225,334),
+             (211,351),(194,361),(176,362),(160,351),(148,330),(148,304),(158,301),(153,291)])
+part('right_arm', [(295,323),(314,320),(351,351),(352,399),(312,403),(305,372),(290,350)])
 part('left_eye', [(197,216),(238,216),(238,261),(197,261)])
 part('right_eye', [(274,217),(315,217),(315,264),(274,264)])
 part('mouth', [(241,260),(264,260),(264,281),(241,281)])
@@ -80,10 +81,18 @@ def contours(mask):
 lines = ['"""Editable anatomical colour contours on a 312 by 432 pixel grid.',
          '', 'Authored with scripts/trace_companion_geometry.py; no runtime image input.',
          'Each entry contains a shared palette index and closed polygon outlines.', '"""', '', 'PARTS = {']
-for name in ('shadow','legs','body','head','hair_tip','left_eye','right_eye','mouth','arm','sparkles'):
+for name in ('shadow','legs','body','head','hair_tip','left_eye','right_eye','mouth','mouth_base','arm','right_arm','sparkles'):
     lines.append(f'    {name!r}: (')
+    part_mask = visible & (labels == name)
+    part_colours = a
+    if name == 'mouth_base':
+        part_mask = np.zeros(a.shape, dtype=bool)
+        part_mask[260:282, 241:265] = True
+        part_colours = a.copy()
+        for row in range(260, 282):
+            part_colours[row, 241:265] = a[row, 239]
     for colour in range(64):
-        rings = contours(visible & (labels == name) & (a == colour))
+        rings = contours(part_mask & (part_colours == colour))
         if rings:
             lines.append(f'        ({colour}, (')
             lines.extend(f'            {ring!r},' for ring in rings)

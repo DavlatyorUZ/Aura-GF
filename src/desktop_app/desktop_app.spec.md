@@ -178,11 +178,11 @@ clothing details. Geometry is rasterised and scaled without smoothing to keep it
 The silhouette has a broad rounded hood, a small blue crown, large glossy blue
 eyes, a tapered central fringe and layered bobbed side locks. The oversized
 white hoodie has blue cuffs and a shaded blue hem above dark leggings and
-white-blue boots. A raised greeting hand remains visible in front of the hood
-beside the cheek. Its animated rotation eases into and out of this resting
-pose. Blink and mouth inputs are clamped to their closed/open endpoints.
+white-blue boots. The left arm rests by the hoodie. Greeting raises the hand beside the cheek;
+thinking brings the fingertips towards the chin. Idle pauses include a two-handed
+phone animation. Application launch activity animates the phone with an action sparkle. Blink and mouth inputs are clamped to their closed/open endpoints.
 
-The default footprint is 240 by 380 logical pixels, with zero layout margins.
+The default footprint is 180 by 280 logical pixels, with zero layout margins.
 The background is transparent. A compact themed status capsule identifies
 Standby, Ready, Listening, Thinking, Speaking, Recording and Transcribing.
 Status text describes activity, never an assistant reply. Standby keeps the
@@ -194,7 +194,7 @@ Awake animation includes gentle breathing, brief blinks 4.5 to 7.5 seconds
 apart and small independent hair movement. Listening uses attentive, curious eyes;
 thinking uses shifting gaze, thoughtful brow, pursed mouth and floating glowing thought
 particles beside the hood; speaking articulates syllabic mouth movement and cheerful
-expressions. The resting mouth retains the small open smile in the supplied reference. All accepted expression
+expressions. The resting mouth is a closed pixel smile; speech alone opens it. All accepted expression
 types (happy, surprised, thinking, curious, excited, concerned, sad, neutral) produce
 distinct facial geometry, blush and brow cues. Dictation has a recording indicator;
 transcription combines that indicator's colour with a processing spinner.
@@ -565,3 +565,5 @@ that connection after a complete or empty import, an early read or graph failure
 and when the client closes the stream before completion. The shared graph store
 retains its separate viewer lifetime. Per-summary failures remain isolated so
 the stream can continue processing later entries.
+
+The trouser top overlaps beneath the breathing hoodie, keeping its waist opaque throughout the motion. Separate sleeve contours allow both arms to change posture without leaving fragments of a former pose.
