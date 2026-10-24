@@ -172,8 +172,9 @@ application is active. It depicts a full-body pixel anime character with blue
 bobbed hair, a white hood, blue headphones, a hoodie and boots. All anatomy,
 clothing, highlights and expressions are drawn from Python geometry through
 `companion_painter.py`; no character images, sprite sheets or downloads are
-required. Colours come from `themes.py`. Geometry is rasterised on a logical
-pixel grid and scaled without smoothing to keep its pixel-art appearance.
+required. Colours come from `themes.py`. Anatomical colour contours in `companion_geometry.py` use a 312 by 432
+pixel grid. Cached vector paths retain the reference silhouette, face and
+clothing details. Geometry is rasterised and scaled without smoothing to keep its pixel-art appearance.
 The silhouette has a broad rounded hood, a small blue crown, large glossy blue
 eyes, a tapered central fringe and layered bobbed side locks. The oversized
 white hoodie has blue cuffs and a shaded blue hem above dark leggings and
@@ -193,11 +194,14 @@ Awake animation includes gentle breathing, brief blinks 4.5 to 7.5 seconds
 apart and small independent hair movement. Listening uses attentive, curious eyes;
 thinking uses shifting gaze, thoughtful brow, pursed mouth and floating glowing thought
 particles beside the hood; speaking articulates syllabic mouth movement and cheerful
-expressions. Resting poses maintain a delicate closed smile. All accepted expression
+expressions. The resting mouth retains the small open smile in the supplied reference. All accepted expression
 types (happy, surprised, thinking, curious, excited, concerned, sad, neutral) produce
 distinct facial geometry, blush and brow cues. Dictation has a recording indicator;
 transcription combines that indicator's colour with a processing spinner.
-A user-triggered greeting articulates the sleeve and hand for 2.4 seconds,
+Thinking adds a gentle head tilt and three stepped particles. Eye closure
+compresses the authored eye contours; the mouth uses discrete pixel shapes.
+Voice readiness after standby and the Wave action trigger a 2.4-second greeting
+that articulates the sleeve and hand around the shoulder,
 without moving the window or changing the assistant's activity state.
 
 Animation follows monotonic elapsed time, with bounded work after an event-loop

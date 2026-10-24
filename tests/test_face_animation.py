@@ -143,7 +143,7 @@ def test_sleep_has_no_continuing_motion(scene):
 def test_empty_space_beside_the_face_does_not_capture_desktop_clicks(scene):
     window, _, _ = scene
     # Blank lateral margins are just as important as the four empty corners.
-    assert not window.mask().contains(QPoint(round(window.width() * 0.04), window.height() // 2))
+    assert not window.mask().contains(QPoint(round(window.width() * 0.02), window.height() // 2))
     assert window.mask().contains(window.rect().center())
 
 

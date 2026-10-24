@@ -621,3 +621,4 @@ def apply_theme(widget) -> None:
     icons = _ensure_icons()
     icon_css = _ICON_STYLESHEET_TEMPLATE.format(**icons)
     widget.setStyleSheet(JARVIS_THEME_STYLESHEET + icon_css)
+COMPANION_REFERENCE_COLOURS = ('#00041d', '#ffffff', '#366df7', '#d56277', '#72f0fc', '#4a5571', '#c6a8d0', '#7489b1', '#001f79', '#789fff', '#2145b6', '#fd91a3', '#ffd5c1', '#bbe0ff', '#30333b', '#b084a3', '#835f8b', '#4273c0', '#4aa6e4', '#90aad1', '#031c48', '#293887', '#e1c9e8', '#a1b8fc', '#586f95', '#6481db', '#60c7fd', '#d4a1a7', '#1f5ada', '#1c3261', '#414f9e', '#aab0b3', '#5189ff', '#4f3b52', '#fde3e5', '#f4b2b4', '#bac9df', '#e0e9ff', '#94e0ff', '#8c8a94', '#6d6a6f', '#3686dd', '#0d309b', '#646bbb', '#b36972', '#9588bc', '#151e2b', '#cb888f', '#d7c4c9', '#749edf', '#5a4889', '#81bdfb', '#727c88', '#3f64db', '#364363', '#aface4', '#241c4e', '#b995ba', '#3956bb', '#56abff', '#e2768a', '#235097', '#7a6fa2', '#0f3b7c')

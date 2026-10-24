@@ -24,12 +24,10 @@ def test_facial_motion_stays_within_its_end_poses(feature):
 
 def test_resting_character_has_a_visible_raised_greeting_hand():
     from desktop_app.companion_painter import CompanionPose, render_companion
-    from desktop_app.themes import COMPANION_COLORS
 
-    image = render_companion(CompanionPose())
-    skin = {COMPANION_COLORS[key] for key in ('skin', 'skin_light', 'skin_shadow')}
+    image = render_companion(CompanionPose()).scaled(104, 144)
     # The hand is visible in front of the lower left hood, beside the cheek.
-    assert sum(image.pixelColor(x, y).name() in skin
+    assert sum(image.pixelColor(x, y).red() > image.pixelColor(x, y).blue() + 15
                for y in range(78, 91) for x in range(23, 36)) > 25
 
 
@@ -88,16 +86,28 @@ def test_character_has_a_filled_silhouette_on_a_transparent_canvas(companion):
     assert image.pixelColor(0, 0).alpha() == 0
 
 
-def test_wave_changes_the_pose_without_moving_the_window(companion):
+def test_wave_changes_the_pose_without_moving_the_window(companion, monkeypatch):
     window, manager = companion
     manager.state = JarvisState.IDLE
     window.face._animate()
     before = window.grab().toImage()
     position = window.pos()
+    now = face_widget._time.monotonic()
+    monkeypatch.setattr(face_widget._time, "monotonic", lambda: now)
     window.face.wave()
+    now += 0.5
+    window.face._animate()
     after = window.grab().toImage()
     assert before != after
     assert window.pos() == position
+
+
+def test_voice_startup_greets_without_changing_the_activity(companion):
+    window, manager = companion
+    manager.state = JarvisState.IDLE
+    window.face._animate()
+    assert window.face._pose.wave > 0
+    assert manager.state == JarvisState.IDLE
 
 
 def test_animation_slows_when_resting_and_stops_when_hidden(companion):
@@ -126,7 +136,7 @@ def test_body_parts_animate_independently_without_character_image_files(feature,
     animated = render_companion(CompanionPose(**{feature: 1 if feature != 'wave' else 0.3}))
     assert neutral != animated
     # Feet stay anchored when the face, hair or arm changes.
-    assert neutral.copy(0, 120, neutral.width(), 24) == animated.copy(0, 120, animated.width(), 24)
+    assert neutral.copy(0, neutral.height()*5//6, neutral.width(), neutral.height()//6) == animated.copy(0, animated.height()*5//6, animated.width(), animated.height()//6)
 
 
 @pytest.mark.parametrize('scale', [0.75, 1, 1.5, 2])
@@ -153,14 +163,12 @@ def test_each_expression_produces_a_distinct_visual_pose(expression):
 
 def test_speaking_mouth_has_greater_vertical_opening_than_resting():
     from desktop_app.companion_painter import CompanionPose, render_companion
-    from desktop_app.themes import COMPANION_COLORS
 
-    resting = render_companion(CompanionPose(mouth=0.0))
-    speaking = render_companion(CompanionPose(mouth=1.0))
-    mouth_colours = {COMPANION_COLORS['mouth'], COMPANION_COLORS['tongue']}
+    resting = render_companion(CompanionPose(mouth=0.0)).scaled(104, 144)
+    speaking = render_companion(CompanionPose(mouth=1.0)).scaled(104, 144)
     # Mouth region is around x=48..58, y=73..82
-    resting_mouth_pixels = sum(resting.pixelColor(x, y).name() in mouth_colours for x in range(48, 59) for y in range(73, 83))
-    speaking_mouth_pixels = sum(speaking.pixelColor(x, y).name() in mouth_colours for x in range(48, 59) for y in range(73, 83))
+    resting_mouth_pixels = sum(resting.pixelColor(x, y).red() > resting.pixelColor(x, y).green() + 35 for x in range(48, 59) for y in range(73, 83))
+    speaking_mouth_pixels = sum(speaking.pixelColor(x, y).red() > speaking.pixelColor(x, y).green() + 35 for x in range(48, 59) for y in range(73, 83))
     assert speaking != resting
     assert speaking_mouth_pixels > resting_mouth_pixels
 
@@ -168,11 +176,11 @@ def test_speaking_mouth_has_greater_vertical_opening_than_resting():
 
 def test_thinking_pose_renders_floating_thought_particles():
     from desktop_app.companion_painter import CompanionPose, render_companion
-    resting = render_companion(CompanionPose(thinking=False))
-    thinking = render_companion(CompanionPose(thinking=True))
-    # Thought particles appear near upper right hood/head area (x=80..98, y=24..55)
-    resting_upper = sum(resting.pixelColor(x, y).alpha() > 100 for x in range(82, 98) for y in range(24, 55))
-    thinking_upper = sum(thinking.pixelColor(x, y).alpha() > 100 for x in range(82, 98) for y in range(24, 55))
+    resting = render_companion(CompanionPose(thinking=False)).scaled(104, 144)
+    thinking = render_companion(CompanionPose(thinking=True)).scaled(104, 144)
+    # Thought particles appear beside the hood, outside the face.
+    resting_upper = sum(resting.pixelColor(x, y).alpha() > 100 for x in range(90, 103) for y in range(72, 82))
+    thinking_upper = sum(thinking.pixelColor(x, y).alpha() > 100 for x in range(90, 103) for y in range(72, 82))
     assert thinking_upper > resting_upper
 
 

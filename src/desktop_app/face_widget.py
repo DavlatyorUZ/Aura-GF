@@ -101,6 +101,9 @@ class FaceWidget(QWidget):
         self._elapsed = max(0.0, now - self._started_at)
         state = self._state_manager.state
         if state != self._jarvis_state:
+            if self._jarvis_state == JarvisState.ASLEEP and state == JarvisState.IDLE:
+                self._wave_started_at = now
+                debug_log('Companion greeting on voice readiness', 'face')
             self._jarvis_state = state
             self._refresh_accessibility()
             self.state_observed.emit(state.value)
