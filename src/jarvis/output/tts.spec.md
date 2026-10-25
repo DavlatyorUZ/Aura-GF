@@ -117,3 +117,12 @@ accept Cyrillic directly and transliterate Latin input, including Uzbek apostrop
 variants, according to their tokenizer language. This is voice-alphabet handling,
 not natural-language intent matching. Voice quality and language support depend
 on the selected checkpoint; a single-language voice is not a multilingual voice.
+
+The Uzbek voice preparation expands integer quantities, decimal digits,
+percentages and numerical arithmetic signs into spoken Cyrillic. Leading-zero
+identifiers and digit sequences longer than fifteen characters are spoken digit
+by digit. Initial Latin `e` maps to `э`; `ye` maps to `е`, and literal `ts` retains
+both letters. Other voice languages retain their original text preparation.
+Sentence and bounded word-chunk boundaries have 200 ms of silence between them,
+without leading or trailing silence. The silence uses the selected model's
+sample rate and participates in exact duration and cancellation ownership.

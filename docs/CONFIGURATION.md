@@ -218,7 +218,7 @@ To use different Piper voices, download from [HuggingFace](https://huggingface.c
 }
 ```
 
-**Local Uzbek MMS voice** (source installations): install `requirements-mms.txt`, then run `python scripts/install_uzbek_voice.py --voice female`. The installer downloads model files only. Set `tts_engine` to `mms` and `tts_voice` to the downloaded directory shown by the installer. Synthesis uses local safetensors weights and does not send text or audio to a server. Uzbek Latin and Cyrillic text are accepted. The voice derives from Meta MMS; review the model and base-model licences before commercial use.
+**Experimental local Uzbek MMS voices** (source installations): install `requirements-mms.txt`, then run `python scripts/install_uzbek_voice.py --voice female` or `--voice mms`. The installer downloads model files only. Set `tts_engine` to `mms` and `tts_voice` to the downloaded directory shown by the installer. Synthesis uses local safetensors weights and does not send text or audio to a server. Uzbek Latin and Cyrillic text, quantities and simple arithmetic are accepted, with short pauses between sentences. Pronunciation can be unclear; check a spoken sample before relying on a checkpoint. These voices derive from Meta MMS; review the model and base-model licences before commercial use.
 
 Set `whisper_language` to `uz` for Uzbek recognition, or leave it `null` for automatic language detection. Use a multilingual Whisper model, without the `.en` suffix. Small recognition and chat models can make mistakes in Uzbek.
 

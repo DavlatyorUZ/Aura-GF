@@ -144,7 +144,7 @@ Most people can use **Settings** from the tray. Advanced setups can edit `~/.con
 
 [**Open the configuration guide →**](docs/CONFIGURATION.md)
 
-The guide covers local model servers, speech recognition, Low Power Mode, voices, dictation, location, MCP integrations and troubleshooting. Uzbek speech supports a fixed recognition language and an optional local MMS female voice in source installations; response quality depends on the selected language model.
+The guide covers local model servers, speech recognition, Low Power Mode, voices, dictation, location, MCP integrations and troubleshooting. Uzbek speech supports a fixed recognition language and experimental local MMS voices in source installations; pronunciation and conversation quality depend on the selected models.
 
 ### Dictation at a glance
 
